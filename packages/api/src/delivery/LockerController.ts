@@ -72,7 +72,7 @@ export class LockerController {
         try {
             const { id } = request.params;
             await this.deleteLockerUseCase.execute(id);
-            return reply.status(204).send();
+            return reply.status(200).send({ message: 'Casillero eliminado correctamente' });
         } catch (error: any) {
             if (error.message.includes('No existe un casillero con ese ID')) {
                 return reply.status(404).send({ error: error.message });
