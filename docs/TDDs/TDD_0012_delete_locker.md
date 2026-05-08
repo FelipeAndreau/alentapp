@@ -23,7 +23,8 @@ Permitir que un administrativo elimine un casillero del sistema, siempre que no 
 
 - El sistema debe impedir la eliminación de un casillero que tenga un socio asignado (`member_id` distinto de `null`).
 - Si el casillero no existe, el sistema debe retornar un error.
-- Al finalizar con éxito, el sistema debe retornar un mensaje de confirmación.
+- Al finalizar con éxito, el sistema debe retornar `204 No Content` sin body.
+- Los casilleros pueden ser eliminados libremente siempre que su `member_id` sea `null`, sin importar si su status es `Available` o `Maintenance`.
 
 ---
 
@@ -37,13 +38,7 @@ Se elimina el registro de `Locker` correspondiente al `id` recibido, siempre que
 
 - **Endpoint**: `DELETE /api/v1/lockers/:id`
 - **Request Body**: ninguno.
-- **Response**:
-
-```ts
-{
-    message: string;
-}
-```
+- **Response**: `204 No Content` (sin body)
 
 ### Componentes de Arquitectura Hexagonal
 
