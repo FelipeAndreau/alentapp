@@ -58,8 +58,8 @@ interface Payment {
   amount: number;           // Requerido, mayor a 0
   month: number;            // Requerido, entre 1 y 12
   year: number;             // Requerido, ano valido
-  dueDate: string;          // Requerido, ISO 8601 Date String (YYYY-MM-DD)
-  memberId: string;         // Requerido, UUID valido
+  due_date: string;          // Requerido, ISO 8601 Date String (YYYY-MM-DD)
+  member_id: string;         // Requerido, UUID valido
 }
 ```
 
@@ -84,7 +84,7 @@ interface Payment {
 ```prisma
 model Payment {
   id            String    @id @default(uuid())
-  amount        Float
+  amount        Decimal
   month         Int
   year          Int
   status        String    @default("Pending")
@@ -118,7 +118,7 @@ interface IPaymentRepository {
    - `amount` debe ser un numero mayor a 0
    - `month` debe estar entre 1 y 12
    - `year` debe ser un ano valido
-   - `dueDate` debe ser una fecha valida en formato ISO 8601
+   - `due_date` debe ser una fecha valida en formato ISO 8601
 
 2. **Comprobar reglas de negocio:**
    - Verificar que el `member_id` corresponde a un socio existente (consultar MemberRepository)
