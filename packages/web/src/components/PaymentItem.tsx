@@ -1,5 +1,5 @@
-import { Box, Text, Badge, Button, Flex, useToast } from '@chakra-ui/react';
-import { PaymentDTO } from '@alentapp/shared';
+import { Box, Text, Badge, Button, Flex } from '@chakra-ui/react';
+import type { PaymentDTO } from '@alentapp/shared';
 import { paymentsService } from '../services/payments';
 
 interface PaymentItemProps {
@@ -8,27 +8,13 @@ interface PaymentItemProps {
 }
 
 export function PaymentItem({ payment, onUpdate }: PaymentItemProps) {
-  const toast = useToast();
-
   const handlePay = async () => {
     try {
       const updated = await paymentsService.pay(payment.id);
       onUpdate(updated);
-      toast({
-        title: 'Cobro exitoso',
-        description: 'La cuota se ha marcado como pagada.',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
+      alert('Cobro exitoso: La cuota se ha marcado como pagada.');
     } catch (error: any) {
-      toast({
-        title: 'No se pudo cobrar',
-        description: error.message, // Mostrará "No se puede cobrar un pago que ha sido anulado", etc.
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+      alert('No se pudo cobrar: ' + error.message);
     }
   };
 
@@ -36,25 +22,13 @@ export function PaymentItem({ payment, onUpdate }: PaymentItemProps) {
     try {
       const updated = await paymentsService.cancel(payment.id);
       onUpdate(updated);
-      toast({
-        title: 'Anulación exitosa',
-        description: 'La cuota ha sido anulada.',
-        status: 'info',
-        duration: 3000,
-        isClosable: true,
-      });
+      alert('Anulacion exitosa: La cuota ha sido anulada.');
     } catch (error: any) {
-      toast({
-        title: 'Error al anular',
-        description: error.message, // Mostrará "No se puede anular un pago que ya fue cobrado", etc.
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+      alert('Error al anular: ' + error.message);
     }
   };
 
-  const colorScheme = payment.status === 'Paid' ? 'green' : payment.status === 'Canceled' ? 'red' : 'yellow';
+  const colorPalette = payment.status === 'Paid' ? 'green' : payment.status === 'Canceled' ? 'red' : 'yellow';
 
   return (
     <Box p={4} borderWidth="1px" borderRadius="lg" mb={4} boxShadow="sm">
@@ -62,16 +36,17 @@ export function PaymentItem({ payment, onUpdate }: PaymentItemProps) {
         <Box>
           <Text fontWeight="bold" fontSize="lg">Cuota {payment.month}/{payment.year}</Text>
           <Text color="gray.500">Monto: ${payment.amount}</Text>
+          <Text color="gray.500" fontSize="sm">Vence el: {new Date(payment.due_date + 'T00:00:00').toLocaleDateString()}</Text>
           {payment.payment_date && <Text fontSize="sm">Fecha de cobro: {new Date(payment.payment_date).toLocaleDateString()}</Text>}
         </Box>
         
         <Flex alignItems="center" gap={4}>
-          <Badge colorScheme={colorScheme} fontSize="md" p={1} borderRadius="md">
+          <Badge colorPalette={colorPalette} fontSize="md" p={1} borderRadius="md">
             {payment.status}
           </Badge>
           
           <Button 
-            colorScheme="green" 
+            colorPalette="green" 
             size="sm" 
             onClick={handlePay}
             isDisabled={payment.status !== 'Pending'}
@@ -79,7 +54,7 @@ export function PaymentItem({ payment, onUpdate }: PaymentItemProps) {
             Cobrar
           </Button>
           <Button 
-            colorScheme="red" 
+            colorPalette="red" 
             variant="outline"
             size="sm" 
             onClick={handleCancel}
