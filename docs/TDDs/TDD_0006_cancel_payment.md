@@ -1,6 +1,6 @@
 ---
 id: 0006
-estado: Propuesto
+estado: Implementado
 autor: Felipe Andreau
 fecha: 2026-04-30
 titulo: Anulacion de Cuotas (Inmutabilidad)

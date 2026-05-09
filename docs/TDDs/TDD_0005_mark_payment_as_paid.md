@@ -1,6 +1,6 @@
 ---
 id: 0005
-estado: Propuesto
+estado: Implementado
 autor: Felipe Andreau
 fecha: 2026-04-30
 titulo: Registro de Cobro de Cuotas

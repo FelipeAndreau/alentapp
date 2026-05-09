@@ -1,6 +1,6 @@
 ---
 id: 0004
-estado: Propuesto
+estado: Implementado
 autor: Felipe Andreau
 fecha: 2026-04-30
 titulo: Emision de Nuevas Cuotas y Pagos
