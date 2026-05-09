@@ -14,17 +14,14 @@ export class MarkPaymentAsPaidUseCase {
       throw new Error('Pago no encontrado');
     }
 
-    // Idempotencia: Si ya está pagado, retornamos éxito sin mutar ni arrojar error
     if (payment.status === 'Paid') {
       return payment;
     }
 
-    // Regla de negocio
     if (payment.status === 'Canceled') {
       throw new Error('No se puede cobrar un pago que ha sido anulado');
     }
 
-    // Actualizamos estado e inyectamos la fecha del sistema (o del mock en tests)
     payment.status = 'Paid';
     payment.payment_date = this.clock.now().toISOString();
 
