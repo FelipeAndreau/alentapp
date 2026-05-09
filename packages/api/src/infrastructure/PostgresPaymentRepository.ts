@@ -1,0 +1,73 @@
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '../generated/client/client.js';
+import { IPaymentRepository } from '../domain/IPaymentRepository.js';
+import { PaymentDTO, PaymentStatus } from '@alentapp/shared';
+
+if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL environment variable is not set');
+}
+
+const prisma = new PrismaClient({
+    adapter: new PrismaPg(process.env.DATABASE_URL),
+});
+
+export class PostgresPaymentRepository implements IPaymentRepository {
+    async save(payment: Omit<PaymentDTO, 'id' | 'created_at' | 'updated_at'>): Promise<PaymentDTO> {
+        const saved = await prisma.payment.create({
+            data: {
+                amount: payment.amount,
+                month: payment.month,
+                year: payment.year,
+                status: payment.status,
+                due_date: new Date(payment.due_date),
+                payment_date: payment.payment_date ? new Date(payment.payment_date) : null,
+                member_id: payment.member_id,
+            }
+        });
+        return this.mapToDTO(saved);
+    }
+
+    async findById(id: string): Promise<PaymentDTO | null> {
+        const payment = await prisma.payment.findUnique({ where: { id } });
+        return payment ? this.mapToDTO(payment) : null;
+    }
+
+    async findByPeriod(memberId: string, month: number, year: number): Promise<PaymentDTO[]> {
+        const payments = await prisma.payment.findMany({
+            where: {
+                member_id: memberId,
+                month,
+                year
+            }
+        });
+        return payments.map(p => this.mapToDTO(p));
+    }
+
+    async update(payment: PaymentDTO): Promise<PaymentDTO> {
+        const updated = await prisma.payment.update({
+            where: { id: payment.id },
+            data: {
+                amount: payment.amount,
+                status: payment.status,
+                due_date: new Date(payment.due_date),
+                payment_date: payment.payment_date ? new Date(payment.payment_date) : null,
+            }
+        });
+        return this.mapToDTO(updated);
+    }
+
+    private mapToDTO(payment: any): PaymentDTO {
+        return {
+            id: payment.id,
+            amount: Number(payment.amount), // Convertimos Decimal de Prisma a Number de TypeScript
+            month: payment.month,
+            year: payment.year,
+            status: payment.status as PaymentStatus,
+            due_date: payment.due_date.toISOString().split('T')[0], // ISO a formato YYYY-MM-DD
+            payment_date: payment.payment_date ? payment.payment_date.toISOString() : null,
+            member_id: payment.member_id,
+            created_at: payment.created_at.toISOString(),
+            updated_at: payment.updated_at.toISOString(),
+        };
+    }
+}
