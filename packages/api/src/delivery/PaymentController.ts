@@ -3,6 +3,7 @@ import { CreatePaymentUseCase } from '../application/payments/CreatePaymentUseCa
 import { UpdatePaymentUseCase } from '../application/payments/UpdatePaymentUseCase.js';
 import { MarkPaymentAsPaidUseCase } from '../application/payments/MarkPaymentAsPaidUseCase.js';
 import { CancelPaymentUseCase } from '../application/payments/CancelPaymentUseCase.js';
+import { GetPaymentsUseCase } from '../application/payments/GetPaymentsUseCase.js';
 import { CreatePaymentRequest, PaymentDTO } from '@alentapp/shared';
 
 export class PaymentController {
@@ -10,8 +11,18 @@ export class PaymentController {
         private readonly createPaymentUseCase: CreatePaymentUseCase,
         private readonly updatePaymentUseCase: UpdatePaymentUseCase,
         private readonly markPaymentAsPaidUseCase: MarkPaymentAsPaidUseCase,
-        private readonly cancelPaymentUseCase: CancelPaymentUseCase
+        private readonly cancelPaymentUseCase: CancelPaymentUseCase,
+        private readonly getPaymentsUseCase: GetPaymentsUseCase
     ) {}
+
+    async getAll(_request: FastifyRequest, reply: FastifyReply) {
+        try {
+            const payments = await this.getPaymentsUseCase.execute();
+            return reply.status(200).send({ data: payments });
+        } catch (error: any) {
+            return reply.status(500).send({ error: error.message });
+        }
+    }
 
     async create(request: FastifyRequest<{ Body: CreatePaymentRequest }>, reply: FastifyReply) {
         try {
@@ -60,11 +71,10 @@ export class PaymentController {
         }
     }
 
-    // Manejador explícito para cumplir con la política de inmutabilidad (Defense in Depth)
     async deleteBlocker(_request: FastifyRequest, reply: FastifyReply) {
         return reply.status(405).send({
             error: "Method Not Allowed",
-            message: "La eliminación física de pagos está prohibida por política de auditoría. Use el endpoint PATCH /payments/:id/cancel para anular.",
+            message: "La eliminacion fisica de pagos esta prohibida por politica de auditoria. Use el endpoint PATCH /payments/:id/cancel para anular.",
             code: "IMMUTABILITY_POLICY"
         });
     }
