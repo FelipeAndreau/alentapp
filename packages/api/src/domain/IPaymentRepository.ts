@@ -5,5 +5,6 @@ export interface IPaymentRepository {
   findById(id: string): Promise<PaymentDTO | null>;
   findByPeriod(memberId: string, month: number, year: number): Promise<PaymentDTO[]>;
   update(payment: PaymentDTO): Promise<PaymentDTO>;
-  // NOTA ARQUITECTÓNICA: Por política de Inmutabilidad, NO incluimos método delete()
+  findAll(): Promise<PaymentDTO[]>;
+
 }

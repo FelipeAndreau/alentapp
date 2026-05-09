@@ -43,6 +43,13 @@ export class PostgresPaymentRepository implements IPaymentRepository {
         return payments.map(p => this.mapToDTO(p));
     }
 
+    async findAll(): Promise<PaymentDTO[]> {
+        const payments = await prisma.payment.findMany({
+            orderBy: { created_at: 'desc' }
+        });
+        return payments.map(p => this.mapToDTO(p));
+    }
+
     async update(payment: PaymentDTO): Promise<PaymentDTO> {
         const updated = await prisma.payment.update({
             where: { id: payment.id },
@@ -59,11 +66,11 @@ export class PostgresPaymentRepository implements IPaymentRepository {
     private mapToDTO(payment: any): PaymentDTO {
         return {
             id: payment.id,
-            amount: Number(payment.amount), // Convertimos Decimal de Prisma a Number de TypeScript
+            amount: Number(payment.amount),
             month: payment.month,
             year: payment.year,
             status: payment.status as PaymentStatus,
-            due_date: payment.due_date.toISOString().split('T')[0], // ISO a formato YYYY-MM-DD
+            due_date: payment.due_date.toISOString().split('T')[0],
             payment_date: payment.payment_date ? payment.payment_date.toISOString() : null,
             member_id: payment.member_id,
             created_at: payment.created_at.toISOString(),
