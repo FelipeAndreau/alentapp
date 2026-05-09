@@ -33,6 +33,7 @@ model Member {
     category   MemberCategory
     status     MemberStatus   @default(Activo)
     created_at DateTime       @default(now())
+    payments   Payment[]
 
     @@map("members") // Para que en la DB la tabla se llame 'members' en minúscula
 }
