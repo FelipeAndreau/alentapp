@@ -36,7 +36,7 @@ No se requieren cambios en el schema de Prisma. La entidad `Discipline` ya fue d
 
 ### Contrato de API (@alentapp/shared)
 
-- **Endpoint**: `PUT /api/v1/disciplines/:id`
+- **Endpoint**: `PATCH /api/v1/disciplines/:id`
 - **Request Body** (`UpdateDisciplineRequest`):
 
 ```ts

@@ -23,7 +23,7 @@ Permitir que un administrativo elimine una disciplina registrada por error o que
 
 - El sistema debe verificar que la disciplina a eliminar exista. Si no existe, debe retornar un error claro.
 - Al finalizar con éxito, el sistema debe confirmar que la disciplina fue eliminada.
-- La eliminación es física (borrado real del registro en la base de datos).
+- La eliminación es lógica. El registro no se borra físicamente sino que se marca con la fecha y hora de eliminación en el campo deleted_at. Las consultas del sistema deben ignorar los registros con deleted_at distinto de null.
 
 ---
 
