@@ -5,6 +5,12 @@ import { MarkPaymentAsPaidUseCase } from '../application/payments/MarkPaymentAsP
 import { CancelPaymentUseCase } from '../application/payments/CancelPaymentUseCase.js';
 import { GetPaymentsUseCase } from '../application/payments/GetPaymentsUseCase.js';
 import { CreatePaymentRequest, PaymentDTO } from '@alentapp/shared';
+import { 
+    NotFoundError, 
+    ConflictError, 
+    ValidationError,
+    DomainError
+} from '../domain/errors/PaymentErrors.js';
 
 export class PaymentController {
     constructor(
@@ -15,12 +21,13 @@ export class PaymentController {
         private readonly getPaymentsUseCase: GetPaymentsUseCase
     ) {}
 
-    async getAll(_request: FastifyRequest, reply: FastifyReply) {
+    async getAll(request: FastifyRequest, reply: FastifyReply) {
         try {
             const payments = await this.getPaymentsUseCase.execute();
             return reply.status(200).send({ data: payments });
-        } catch (error: any) {
-            return reply.status(500).send({ error: error.message });
+        } catch (error) {
+            request.log.error({ err: error }, 'Failed to get payments');
+            return reply.status(500).send({ error: "Internal server error" });
         }
     }
 
@@ -28,11 +35,13 @@ export class PaymentController {
         try {
             const payment = await this.createPaymentUseCase.execute(request.body);
             return reply.status(201).send({ data: payment });
-        } catch (error: any) {
-            const msg = error.message;
-            if (msg.includes('Socio no encontrado')) return reply.status(404).send({ error: msg });
-            if (msg.includes('Ya existe un pago activo')) return reply.status(409).send({ error: msg });
-            return reply.status(400).send({ error: msg });
+        } catch (error) {
+            if (error instanceof NotFoundError) return reply.status(404).send({ error: error.message, code: error.code });
+            if (error instanceof ConflictError) return reply.status(409).send({ error: error.message, code: error.code });
+            if (error instanceof ValidationError) return reply.status(400).send({ error: error.message, code: error.code });
+
+            request.log.error({ err: error }, 'Failed to create payment');
+            return reply.status(500).send({ error: "Internal server error" });
         }
     }
 
@@ -40,10 +49,13 @@ export class PaymentController {
         try {
             const payment = await this.updatePaymentUseCase.execute(request.params.id, request.body);
             return reply.status(200).send({ data: payment });
-        } catch (error: any) {
-            const msg = error.message;
-            if (msg.includes('no encontrado')) return reply.status(404).send({ error: msg });
-            return reply.status(400).send({ error: msg });
+        } catch (error) {
+            if (error instanceof NotFoundError) return reply.status(404).send({ error: error.message, code: error.code });
+            if (error instanceof ConflictError) return reply.status(409).send({ error: error.message, code: error.code });
+            if (error instanceof ValidationError) return reply.status(400).send({ error: error.message, code: error.code });
+
+            request.log.error({ err: error }, 'Failed to update payment');
+            return reply.status(500).send({ error: "Internal server error" });
         }
     }
 
@@ -51,11 +63,13 @@ export class PaymentController {
         try {
             const payment = await this.markPaymentAsPaidUseCase.execute(request.params.id);
             return reply.status(200).send({ data: payment });
-        } catch (error: any) {
-            const msg = error.message;
-            if (msg.includes('no encontrado')) return reply.status(404).send({ error: msg });
-            if (msg.includes('anulado')) return reply.status(409).send({ error: msg });
-            return reply.status(400).send({ error: msg });
+        } catch (error) {
+            if (error instanceof NotFoundError) return reply.status(404).send({ error: error.message, code: error.code });
+            if (error instanceof ConflictError) return reply.status(409).send({ error: error.message, code: error.code });
+            if (error instanceof ValidationError) return reply.status(400).send({ error: error.message, code: error.code });
+
+            request.log.error({ err: error }, 'Failed to process payment');
+            return reply.status(500).send({ error: "Internal server error" });
         }
     }
 
@@ -63,15 +77,18 @@ export class PaymentController {
         try {
             const payment = await this.cancelPaymentUseCase.execute(request.params.id);
             return reply.status(200).send({ data: payment });
-        } catch (error: any) {
-            const msg = error.message;
-            if (msg.includes('no encontrado')) return reply.status(404).send({ error: msg });
-            if (msg.includes('cobrado')) return reply.status(409).send({ error: msg });
-            return reply.status(400).send({ error: msg });
+        } catch (error) {
+            if (error instanceof NotFoundError) return reply.status(404).send({ error: error.message, code: error.code });
+            if (error instanceof ConflictError) return reply.status(409).send({ error: error.message, code: error.code });
+            if (error instanceof ValidationError) return reply.status(400).send({ error: error.message, code: error.code });
+
+            request.log.error({ err: error }, 'Failed to cancel payment');
+            return reply.status(500).send({ error: "Internal server error" });
         }
     }
 
-    async deleteBlocker(_request: FastifyRequest, reply: FastifyReply) {
+    async deleteBlocker(request: FastifyRequest, reply: FastifyReply) {
+        request.log.warn({ msg: "Intento de eliminacion fisica bloqueado", ip: request.ip });
         return reply.status(405).send({
             error: "Method Not Allowed",
             message: "La eliminacion fisica de pagos esta prohibida por politica de auditoria. Use el endpoint PATCH /payments/:id/cancel para anular.",
