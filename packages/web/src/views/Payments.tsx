@@ -25,6 +25,8 @@ import {
   createListCollection 
 } from "../components/ui/select";
 
+import { toaster } from '../components/ui/toaster';
+
 export function PaymentsView() {
   const [payments, setPayments] = useState<PaymentDTO[]>([]);
   const [members, setMembers] = useState<MemberDTO[]>([]);
@@ -87,30 +89,26 @@ export function PaymentsView() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.member_id) {
-      alert("Por favor seleccione un miembro");
+      toaster.create({ title: "Por favor seleccione un miembro", type: "warning" });
       return;
     }
     if (formData.amount <= 0) {
-      alert("El monto debe ser mayor a 0");
-      return;
-    }
-
-    const dueDate = new Date(formData.due_date);
-    const dueDateMonth = dueDate.getUTCMonth() + 1;
-    const dueDateYear = dueDate.getUTCFullYear();
-
-    if (dueDateYear < formData.year || (dueDateYear === formData.year && dueDateMonth < formData.month)) {
-      alert("Error: La fecha de vencimiento no puede ser cronologicamente anterior al mes y ano asignado para la cuota.");
+      toaster.create({ title: "El monto debe ser mayor a 0", type: "warning" });
       return;
     }
 
     setIsSubmitting(true);
     try {
       await paymentsService.create(formData);
+      toaster.create({ title: "Pago creado con exito", type: "success" });
       setIsDialogOpen(false);
       fetchData();
     } catch (err: any) {
-      alert(err.message || "Error al crear el pago");
+      toaster.create({ 
+        title: "Error al crear el pago", 
+        description: err.message, 
+        type: "error" 
+      });
     } finally {
       setIsSubmitting(false);
     }
