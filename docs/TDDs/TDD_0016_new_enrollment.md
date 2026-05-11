@@ -27,13 +27,13 @@ Permitir que un administrativo registre la inscripción de un socio a un deporte
 - El sistema debe validar que el socio referenciado exista en el sistema.
 - El sistema debe validar que el deporte referenciado exista en el sistema.
 - El sistema debe validar que el deporte no haya sido dado de baja (`deleted_at` tiene que ser `null`).
-- El sistema debe validar que el socio tenga `account_status` igual a `Active`. Socios con estado `Delinquent` o `Inactive` no pueden inscribirse.
+- El sistema debe validar que el socio tenga `estadoCuenta` igual a `Active`.
 - El sistema debe validar que no exista otra inscripción con `is_active = true` y `deleted_at = null` para el mismo `member_id` y `sport_id`.
 - El sistema debe validar que la cantidad de inscripciones activas del deporte sea estrictamente menor a `Sport.max_capacity`. Si es igual o mayor, la inscripción debe rechazarse.
 - El sistema debe generar automáticamente `enrollment_date` con la fecha y hora actuales del servidor al momento de la creación.
 - El sistema debe inicializar `is_active` en `true`.
 - El sistema debe inicializar `deleted_at` en `null`.
-- Al finalizar correctamente, la API debe responder con estado `201 Created` y retornar la inscripción creada.
+- En caso de creacion exitosa, el sistema debe responder con estado `201 Created` y retornar la inscripción creada.
 
 ---
 
@@ -43,14 +43,12 @@ Permitir que un administrativo registre la inscripción de un socio a un deporte
 
 Se incorpora la entidad `Enrollment` al esquema de Prisma con la siguiente estructura:
 
-| Campo             | Tipo     | Nullable | Descripción                                                           |
-| ----------------- | -------- | -------- | --------------------------------------------------------------------- |
-| `id`              | UUID     | No       | Identificador único de la inscripción                                 |
-| `member_id`       | UUID     | No       | Referencia al socio inscripto                                         |
-| `sport_id`        | UUID     | No       | Referencia al deporte asociado                                        |
-| `enrollment_date` | DateTime | No       | Fecha y hora de inscripción, generada automáticamente por el servidor |
-| `is_active`       | Boolean  | No       | Indica si la inscripción está vigente. Se inicializa en `true`        |
-| `deleted_at`      | DateTime | Sí       | Marca de baja lógica. `null` indica registro activo                   |
+- `id`: Identificador único universal (UUID).
+- `member_id`: UUID, referencia al socio inscripto. **Inmutable post-creación**.
+- `sport_id`: UUID, referencia al deporte asociado. **Inmutable post-creación**.
+- `enrollment_date`: DateTime, fecha y hora de inscripción generada automáticamente por el servidor al momento de la creación. **Inmutable post-creación**.
+- `is_active`: Booleano, indica si la inscripción está vigente. Se inicializa en `true`.
+- `deleted_at`: DateTime, marca de baja lógica. `null` indica que la inscripción está activa; si tiene valor, indica que fue eliminada lógicamente (soft delete).
 
 ### Reglas de Negocio
 
