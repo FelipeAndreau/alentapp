@@ -1,6 +1,12 @@
 import { IPaymentRepository } from '../../domain/IPaymentRepository.js';
 import { MemberRepository } from '../../domain/MemberRepository.js';
 import { CreatePaymentRequest, PaymentDTO } from '@alentapp/shared';
+import { 
+  PaymentValidationError, 
+  MemberNotFoundError, 
+  DuplicateActivePaymentError 
+} from '../../domain/errors/PaymentErrors.js';
+import { PaymentValidator } from '../../domain/services/PaymentValidator.js';
 
 export class CreatePaymentUseCase {
   constructor(
@@ -11,44 +17,22 @@ export class CreatePaymentUseCase {
   async execute(request: CreatePaymentRequest): Promise<PaymentDTO> {
 
     if (!request.member_id || request.member_id.trim() === '') {
-      throw new Error('El ID del socio es obligatorio');
+      throw new PaymentValidationError('El ID del socio es obligatorio');
     }
 
-    if (request.amount <= 0) {
-      throw new Error('El monto debe ser mayor a 0');
-    }
-
-    if (!Number.isInteger(request.month) || request.month < 1 || request.month > 12) {
-      throw new Error('El mes debe estar entre 1 y 12');
-    }
-
-    const currentYear = new Date().getFullYear();
-    if (!Number.isInteger(request.year) || request.year < currentYear) {
-      throw new Error('El ano no puede ser en el pasado');
-    }
-
-    if (!request.due_date || isNaN(Date.parse(request.due_date))) {
-      throw new Error('La fecha de vencimiento es invalida');
-    }
-
-    const dueDate = new Date(request.due_date);
-    const dueDateMonth = dueDate.getUTCMonth() + 1;
-    const dueDateYear = dueDate.getUTCFullYear();
-
-    if (dueDateYear < request.year || (dueDateYear === request.year && dueDateMonth < request.month)) {
-      throw new Error('La fecha de vencimiento no puede ser anterior al mes/ano del pago');
-    }
+    PaymentValidator.validateAmount(request.amount);
+    PaymentValidator.validatePeriod(request.month, request.year);
+    PaymentValidator.validateDueDate(request.due_date, request.month, request.year);
 
     const member = await this.memberRepository.findById(request.member_id);
     if (!member) {
-      throw new Error('Socio no encontrado');
+      throw new MemberNotFoundError(request.member_id);
     }
 
-    const existingPayments = await this.paymentRepository.findByPeriod(request.member_id, request.month, request.year);
-    const hasActivePayment = existingPayments.some(p => p.status === 'Pending' || p.status === 'Paid');
+    const activePayments = await this.paymentRepository.findActiveInPeriod(request.member_id, request.month, request.year);
     
-    if (hasActivePayment) {
-      throw new Error('Ya existe un pago activo (Pending o Paid) para ese periodo');
+    if (activePayments.length > 0) {
+      throw new DuplicateActivePaymentError();
     }
 
     const newPayment = await this.paymentRepository.save({
@@ -58,7 +42,7 @@ export class CreatePaymentUseCase {
       status: 'Pending',
       due_date: request.due_date,
       payment_date: null,
-      member_id: request.member_id
+      member_id: request.member_id,
     });
 
     return newPayment;

@@ -1,5 +1,6 @@
 import { IPaymentRepository } from '../../domain/IPaymentRepository.js';
 import { PaymentDTO } from '@alentapp/shared';
+import { PaymentNotFoundError, PaymentAlreadyPaidError } from '../../domain/errors/PaymentErrors.js';
 
 export class CancelPaymentUseCase {
   constructor(
@@ -9,7 +10,7 @@ export class CancelPaymentUseCase {
   async execute(paymentId: string): Promise<PaymentDTO> {
     const payment = await this.paymentRepository.findById(paymentId);
     if (!payment) {
-      throw new Error('Pago no encontrado');
+      throw new PaymentNotFoundError();
     }
 
     if (payment.status === 'Canceled') {
@@ -17,12 +18,14 @@ export class CancelPaymentUseCase {
     }
 
     if (payment.status === 'Paid') {
-      throw new Error('No se puede anular un pago que ya fue cobrado');
+      throw new PaymentAlreadyPaidError();
     }
 
-    payment.status = 'Canceled';
-    payment.payment_date = null;
+    const updatedPayment = {
+      ...payment,
+      status: 'Canceled' as const,
+    };
 
-    return await this.paymentRepository.update(payment);
+    return await this.paymentRepository.update(updatedPayment);
   }
 }

@@ -1,15 +1,6 @@
-import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../generated/client/client.js';
 import { IPaymentRepository } from '../domain/IPaymentRepository.js';
 import { PaymentDTO, PaymentStatus } from '@alentapp/shared';
-
-if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL environment variable is not set');
-}
-
-const prisma = new PrismaClient({
-    adapter: new PrismaPg(process.env.DATABASE_URL),
-});
+import { prisma } from './PrismaClient.js';
 
 export class PostgresPaymentRepository implements IPaymentRepository {
     async save(payment: Omit<PaymentDTO, 'id' | 'created_at' | 'updated_at'>): Promise<PaymentDTO> {
@@ -32,12 +23,13 @@ export class PostgresPaymentRepository implements IPaymentRepository {
         return payment ? this.mapToDTO(payment) : null;
     }
 
-    async findByPeriod(memberId: string, month: number, year: number): Promise<PaymentDTO[]> {
+    async findActiveInPeriod(memberId: string, month: number, year: number): Promise<PaymentDTO[]> {
         const payments = await prisma.payment.findMany({
             where: {
                 member_id: memberId,
                 month,
-                year
+                year,
+                status: { in: ['Pending', 'Paid'] }
             }
         });
         return payments.map(p => this.mapToDTO(p));
@@ -66,7 +58,7 @@ export class PostgresPaymentRepository implements IPaymentRepository {
     private mapToDTO(payment: any): PaymentDTO {
         return {
             id: payment.id,
-            amount: Number(payment.amount),
+            amount: payment.amount.toString(),
             month: payment.month,
             year: payment.year,
             status: payment.status as PaymentStatus,

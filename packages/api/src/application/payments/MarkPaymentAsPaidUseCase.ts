@@ -1,6 +1,7 @@
 import { IPaymentRepository } from '../../domain/IPaymentRepository.js';
 import { IClock } from '../../domain/services/Clock.js';
 import { PaymentDTO } from '@alentapp/shared';
+import { PaymentNotFoundError, PaymentAlreadyCanceledError } from '../../domain/errors/PaymentErrors.js';
 
 export class MarkPaymentAsPaidUseCase {
   constructor(
@@ -11,7 +12,7 @@ export class MarkPaymentAsPaidUseCase {
   async execute(paymentId: string): Promise<PaymentDTO> {
     const payment = await this.paymentRepository.findById(paymentId);
     if (!payment) {
-      throw new Error('Pago no encontrado');
+      throw new PaymentNotFoundError();
     }
 
     if (payment.status === 'Paid') {
@@ -19,12 +20,15 @@ export class MarkPaymentAsPaidUseCase {
     }
 
     if (payment.status === 'Canceled') {
-      throw new Error('No se puede cobrar un pago que ha sido anulado');
+      throw new PaymentAlreadyCanceledError();
     }
 
-    payment.status = 'Paid';
-    payment.payment_date = this.clock.now().toISOString();
+    const updatedPayment = {
+      ...payment,
+      status: 'Paid' as const,
+      payment_date: this.clock.now().toISOString(),
+    };
 
-    return await this.paymentRepository.update(payment);
+    return await this.paymentRepository.update(updatedPayment);
   }
 }
