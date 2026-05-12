@@ -45,3 +45,8 @@ export class PaymentNotModifiableError extends ConflictError {
   readonly code = 'PAYMENT_NOT_MODIFIABLE';
   constructor() { super('Solo se pueden modificar pagos en estado Pending'); }
 }
+
+export class InactiveMemberError extends ValidationError {
+  readonly code = 'INACTIVE_MEMBER';
+  constructor() { super('No se pueden emitir pagos a socios con estado Suspendido'); }
+}

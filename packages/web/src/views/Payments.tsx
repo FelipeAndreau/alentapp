@@ -44,6 +44,8 @@ export function PaymentsView() {
     due_date: new Date().toISOString().split('T')[0],
   });
 
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
   const membersCollection = useMemo(() => createListCollection({
     items: members.map(m => ({ label: `${m.name} (${m.dni})`, value: m.id }))
   }), [members]);
@@ -83,21 +85,29 @@ export function PaymentsView() {
       year: new Date().getFullYear(),
       due_date: new Date().toISOString().split('T')[0],
     });
+    setFormErrors({});
     setIsDialogOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errors: Record<string, string> = {};
+    
     if (!formData.member_id) {
-      toaster.create({ title: "Por favor seleccione un miembro", type: "warning" });
-      return;
+      errors.member_id = "Debe seleccionar un socio";
     }
     if (formData.amount <= 0) {
-      toaster.create({ title: "El monto debe ser mayor a 0", type: "warning" });
+      errors.amount = "El monto debe ser mayor a 0";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toaster.create({ title: "Corrija los errores en el formulario", type: "warning" });
       return;
     }
 
     setIsSubmitting(true);
+    setFormErrors({});
     try {
       await paymentsService.create(formData);
       toaster.create({ title: "Pago creado con exito", type: "success" });
@@ -105,10 +115,14 @@ export function PaymentsView() {
       fetchData();
     } catch (err: any) {
       toaster.create({ 
-        title: "Error al crear el pago", 
+        title: "No se pudo crear el pago", 
         description: err.message, 
         type: "error" 
       });
+      // Try to map server errors to fields if possible
+      if (err.message.includes("duplicado")) {
+        setFormErrors({ period: "Ya existe un pago para este socio en este periodo" });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -192,7 +206,12 @@ export function PaymentsView() {
             </DialogHeader>
             <DialogBody>
               <Stack gap="4">
-                <Field label="Socio" required>
+                <Field 
+                  label="Socio" 
+                  required 
+                  invalid={!!formErrors.member_id} 
+                  errorText={formErrors.member_id}
+                >
                   <SelectRoot 
                     collection={membersCollection} 
                     value={formData.member_id ? [formData.member_id] : []}
@@ -210,7 +229,12 @@ export function PaymentsView() {
                     </SelectContent>
                   </SelectRoot>
                 </Field>
-                <Field label="Monto" required>
+                <Field 
+                  label="Monto" 
+                  required 
+                  invalid={!!formErrors.amount} 
+                  errorText={formErrors.amount}
+                >
                   <Input 
                     type="number"
                     placeholder="Ej. 5000" 
@@ -221,7 +245,12 @@ export function PaymentsView() {
                   />
                 </Field>
                 <HStack gap="4">
-                  <Field label="Mes" required>
+                  <Field 
+                    label="Mes" 
+                    required 
+                    invalid={!!formErrors.period} 
+                    errorText={formErrors.period}
+                  >
                     <Input 
                       type="number" 
                       value={formData.month}

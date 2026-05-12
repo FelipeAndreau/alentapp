@@ -83,9 +83,9 @@ interface Payment {
 ### Definicion del Puerto (Repository Interface)
 
 ```ts
-interface IPaymentRepository {
-  findById(id: string): Promise<Payment | null>;
-  updateStatus(id: string, status: string, paymentDate?: Date): Promise<Payment>;
+export interface IPaymentRepository {
+  findById(id: string): Promise<PaymentDTO | null>;
+  update(payment: PaymentDTO): Promise<PaymentDTO>;
   // ... otros metodos
 }
 ```
@@ -106,7 +106,7 @@ interface IPaymentRepository {
    - Asignar `payment_date` a la hora actual (usar inyeccion de dependencia de reloj para testabilidad)
 
 4. **Persistir cambios:**
-   - Llamar a `updateStatus()` del repositorio
+   - Llamar a `update()` del repositorio pasando el objeto actualizado
    - Retornar el pago actualizado
 
 ## Casos de Borde y Manejo de Errores

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Box, Text, Badge, Button, Flex } from '@chakra-ui/react';
 import { toaster } from './ui/toaster';
-import { PaymentDTO } from '@alentapp/shared';
+import type { PaymentDTO } from '@alentapp/shared';
 import { paymentsService } from '../services/payments';
 
 interface PaymentItemProps {

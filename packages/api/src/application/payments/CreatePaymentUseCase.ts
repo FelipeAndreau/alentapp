@@ -4,7 +4,8 @@ import { CreatePaymentRequest, PaymentDTO } from '@alentapp/shared';
 import { 
   PaymentValidationError, 
   MemberNotFoundError, 
-  DuplicateActivePaymentError 
+  DuplicateActivePaymentError,
+  InactiveMemberError 
 } from '../../domain/errors/PaymentErrors.js';
 import { PaymentValidator } from '../../domain/services/PaymentValidator.js';
 
@@ -27,6 +28,10 @@ export class CreatePaymentUseCase {
     const member = await this.memberRepository.findById(request.member_id);
     if (!member) {
       throw new MemberNotFoundError(request.member_id);
+    }
+
+    if (member.status === 'Suspendido') {
+      throw new InactiveMemberError();
     }
 
     const activePayments = await this.paymentRepository.findActiveInPeriod(request.member_id, request.month, request.year);

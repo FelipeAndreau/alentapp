@@ -22,6 +22,7 @@ Permitir al sistema o a un administrativo generar la obligacion de pago mensual 
 ### Criterios de Aceptacion
 
 - El sistema debe validar que el `member_id` corresponda a un socio existente en la base de datos.
+- El sistema debe impedir la emision de pagos a socios con estado "Suspendido".
 - El sistema debe crear el registro con el status `"Pending"` por defecto.
 - El monto (`amount`) debe ser estrictamente mayor a 0.
 - La fecha de vencimiento (`due_date`) debe ser posterior a la fecha actual.
@@ -104,11 +105,12 @@ model Payment {
 ### Definicion del Puerto (Repository Interface)
 
 ```ts
-interface IPaymentRepository {
-  create(payment: Payment): Promise<Payment>;
-  findById(id: string): Promise<Payment | null>;
-  findByMemberId(memberId: string): Promise<Payment[]>;
-  // ... otros metodos
+export interface IPaymentRepository {
+  save(payment: Omit<PaymentDTO, 'id' | 'created_at' | 'updated_at'>): Promise<PaymentDTO>;
+  findById(id: string): Promise<PaymentDTO | null>;
+  findActiveInPeriod(memberId: string, month: number, year: number): Promise<PaymentDTO[]>;
+  update(payment: PaymentDTO): Promise<PaymentDTO>;
+  findAll(): Promise<PaymentDTO[]>;
 }
 ```
 
@@ -122,15 +124,15 @@ interface IPaymentRepository {
 
 2. **Comprobar reglas de negocio:**
    - Verificar que el `member_id` corresponde a un socio existente (consultar MemberRepository)
-   - Validar que no exista un pago duplicado para el mismo socio en el mismo periodo (mes/ano)
+   - Verificar que el estado del socio NO sea "Suspendido".
+   - Validar que no exista un pago duplicado (Pending o Paid) para el mismo socio en el mismo periodo (mes/ano) usando `findActiveInPeriod()`
 
 3. **Mapear DTO a Entidad de Dominio:**
-   - Convertir el `CreatePaymentRequest` a la entidad `Payment`
    - Asignar estado inicial `"Pending"`
    - Inicializar `payment_date` como `null`
 
 4. **Persistir a traves del Repositorio:**
-   - Llamar al metodo `create()` del `PaymentRepository`
+   - Llamar al metodo `save()` del `PaymentRepository`
    - Retornar la entidad creada al cliente
 
 ## Casos de Borde y Manejo de Errores
@@ -138,6 +140,7 @@ interface IPaymentRepository {
 | Escenario | Validacion / Regla de Negocio | Codigo HTTP |
 |-----------|-------------------------------|-------------|
 | Socio inexistente | El `member_id` no corresponde a un Member existente en la BD | 400 Bad Request |
+| Socio Suspendido | No se pueden emitir pagos si el `status` del socio es `"Suspendido"` | 400 Bad Request |
 | Monto invalido (<= 0) | El `amount` debe ser estrictamente mayor a 0 | 400 Bad Request |
 | Datos faltantes | Todos los campos marcados como requeridos deben estar presentes | 400 Bad Request |
 | Periodo duplicado | Ya existe un pago Pending o Paid para el mismo socio en ese mes/ano | 409 Conflict |
