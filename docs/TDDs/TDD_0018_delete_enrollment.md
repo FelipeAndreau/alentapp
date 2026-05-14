@@ -45,7 +45,7 @@ La baja se implementa mediante **eliminación lógica**: se establece `deleted_a
 
 ## Contrato de API (`@alentapp/shared`)
 
-Se reutiliza `EnrollmentDTO` definido en TDD-0024. No se requieren nuevos tipos.
+Se reutiliza `EnrollmentDTO` definido en TDD-0016. No se requieren nuevos tipos.
 
 - **Endpoint**: `DELETE /api/v1/enrollments/:id`
 - **Request Body**: `None`.
@@ -66,7 +66,7 @@ Se reutiliza `EnrollmentDTO` definido en TDD-0024. No se requieren nuevos tipos.
 
 - **Puerto**: `EnrollmentRepository` (interfaz en el Dominio) — se extiende con el método `softDelete(id)`. Permite que el caso de uso opere contra una abstracción sin depender directamente de Prisma.
 
-- **Servicio de Dominio**: `EnrollmentValidator` — reutilizado de TDD-0024. Para este caso de uso valida que la inscripción exista y que no haya sido eliminada previamente.
+- **Servicio de Dominio**: `EnrollmentValidator` — reutilizado de TDD-0016. Para este caso de uso valida que la inscripción exista y que no haya sido eliminada previamente.
 
 - **Caso de Uso**: `DeleteEnrollmentUseCase` — orquesta la operación de baja. Recibe el `id`, delega las validaciones al `EnrollmentValidator` y ejecuta la baja lógica vía `EnrollmentRepository.softDelete`.
 
@@ -90,8 +90,8 @@ Se reutiliza `EnrollmentDTO` definido en TDD-0024. No se requieren nuevos tipos.
 
 ## Plan de Implementación
 
-1. Confirmar que el modelo `Enrollment` en `schema.prisma` incluya `deleted_at` nullable e `is_active` (definidos en TDD-0024).
-2. Confirmar que `EnrollmentDTO` incluya los campos `deleted_at` e `is_active` (definido en TDD-0024).
+1. Confirmar que el modelo `Enrollment` en `schema.prisma` incluya `deleted_at` nullable e `is_active` (definidos en TDD-0016).
+2. Confirmar que `EnrollmentDTO` incluya los campos `deleted_at` e `is_active` (definido en TDD-0016).
 3. Extender el puerto `EnrollmentRepository.ts` en `src/domain/` con el método `softDelete(id)`.
 4. Implementar `DeleteEnrollmentUseCase.ts` en `src/application/`, validando existencia y estado de la inscripción antes de ejecutar la baja.
 5. Implementar el método `softDelete` en `PostgresEnrollmentRepository.ts` en `src/infrastructure/`: actualizar `deleted_at = now()` e `is_active = false`.
