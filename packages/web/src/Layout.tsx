@@ -1,11 +1,13 @@
 import { Provider } from './components/ui/provider';
 import { Box, Container, Flex, Text, HStack } from '@chakra-ui/react';
+import { Toaster } from './components/ui/toaster';
 
 import { Outlet, Link as RouterLink } from "react-router";
 
 function Layout() {
     return (
         <Provider>
+            <Toaster />
             <Box as="nav" borderBottomWidth="1px" py="4" px="8" bg="bg.panel" boxShadow="sm" position="sticky" top="0" zIndex="docked">
                 <Flex justify="space-between" align="center" maxW="7xl" mx="auto">
                     <RouterLink to="/">
@@ -22,15 +24,27 @@ function Layout() {
                     </RouterLink>
                     <HStack gap="10">
                         <RouterLink to="/members">
-                            <Text 
-                                fontWeight="semibold" 
-                                fontSize="sm" 
-                                textTransform="uppercase" 
+                            <Text
+                                fontWeight="semibold"
+                                fontSize="sm"
+                                textTransform="uppercase"
                                 letterSpacing="wider"
                                 color="fg.muted"
                                 _hover={{ color: "blue.500", textDecoration: "none" }}
                             >
                                 Miembros
+                            </Text>
+                        </RouterLink>
+                        <RouterLink to="/disciplines">
+                            <Text
+                                fontWeight="semibold"
+                                fontSize="sm"
+                                textTransform="uppercase"
+                                letterSpacing="wider"
+                                color="fg.muted"
+                                _hover={{ color: "blue.500", textDecoration: "none" }}
+                            >
+                                Disciplinas
                             </Text>
                         </RouterLink>
                     </HStack>
