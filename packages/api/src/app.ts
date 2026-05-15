@@ -22,6 +22,10 @@ import { GetLockersUseCase } from './application/lockers/GetLockersUseCase.js';
 import { UpdateLockerUseCase } from './application/lockers/UpdateLockerUseCase.js';
 import { DeleteLockerUseCase } from './application/lockers/DeleteLockerUseCase.js';
 import { LockerController } from './delivery/lockers/LockerController.js';
+import { PostgresDisciplineRepository } from './infrastructure/disciplines/PostgresDisciplineRepository.js';
+import { DisciplineValidator } from './domain/disciplines/services/DisciplineValidator.js';
+import { CreateDisciplineUseCase } from './application/disciplines/CreateDisciplineUseCase.js';
+import { DisciplineController } from './delivery/disciplines/DisciplineController.js';
 
 export function buildApp() {
     const server = Fastify({
@@ -69,20 +73,13 @@ export function buildApp() {
         deleteLockerUseCase
     );
 
-    server.get('/api/v1/socios', memberController.getAll.bind(memberController));
-    server.post('/api/v1/socios', memberController.create.bind(memberController));
-    server.put('/api/v1/socios/:id', memberController.update.bind(memberController));
-    server.delete('/api/v1/socios/:id', memberController.delete.bind(memberController));
-
     const paymentRepo = new PostgresPaymentRepository();
     const systemClock = new SystemClock();
-
     const createPaymentUseCase = new CreatePaymentUseCase(paymentRepo, memberRepo);
     const updatePaymentUseCase = new UpdatePaymentUseCase(paymentRepo);
     const markPaymentAsPaidUseCase = new MarkPaymentAsPaidUseCase(paymentRepo, systemClock);
     const cancelPaymentUseCase = new CancelPaymentUseCase(paymentRepo);
     const getPaymentsUseCase = new GetPaymentsUseCase(paymentRepo);
-
     const paymentController = new PaymentController(
         createPaymentUseCase,
         updatePaymentUseCase,
@@ -90,6 +87,16 @@ export function buildApp() {
         cancelPaymentUseCase,
         getPaymentsUseCase
     );
+
+    const disciplineRepo = new PostgresDisciplineRepository();
+    const disciplineValidator = new DisciplineValidator();
+    const createDisciplineUseCase = new CreateDisciplineUseCase(disciplineRepo, memberRepo, disciplineValidator);
+    const disciplineController = new DisciplineController(createDisciplineUseCase);
+
+    server.get('/api/v1/socios', memberController.getAll.bind(memberController));
+    server.post('/api/v1/socios', memberController.create.bind(memberController));
+    server.put('/api/v1/socios/:id', memberController.update.bind(memberController));
+    server.delete('/api/v1/socios/:id', memberController.delete.bind(memberController));
 
     server.get('/api/v1/payments', paymentController.getAll.bind(paymentController));
     server.post('/api/v1/payments', paymentController.create.bind(paymentController));
@@ -102,6 +109,8 @@ export function buildApp() {
     server.post('/api/v1/lockers', lockerController.create.bind(lockerController));
     server.put('/api/v1/lockers/:id', lockerController.update.bind(lockerController));
     server.delete('/api/v1/lockers/:id', lockerController.delete.bind(lockerController));
+
+    server.post('/api/v1/disciplines', disciplineController.create.bind(disciplineController));
 
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'asd' })

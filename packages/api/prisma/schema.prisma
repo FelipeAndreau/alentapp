@@ -31,16 +31,17 @@ enum LockerStatus {
 }
 
 model Member {
-    id         String         @id @default(uuid())
-    dni        String         @unique
-    name       String
-    email      String         @unique
-    birthdate  DateTime?      @db.Date
-    category   MemberCategory
-    status     MemberStatus   @default(Activo)
-    created_at DateTime       @default(now())
-    payments   Payment[]
-    lockers    Locker[]
+    id          String         @id @default(uuid())
+    dni         String         @unique
+    name        String
+    email       String         @unique
+    birthdate   DateTime?      @db.Date
+    category    MemberCategory
+    status      MemberStatus   @default(Activo)
+    created_at  DateTime       @default(now())
+    payments    Payment[]
+    lockers     Locker[]
+    disciplines Discipline[]
 
     @@map("members")
 }
@@ -76,4 +77,17 @@ model Locker {
     member    Member?      @relation(fields: [member_id], references: [id])
 
     @@map("lockers")
+}
+
+model Discipline {
+    id                  String    @id @default(uuid())
+    reason              String
+    start_date          DateTime
+    end_date            DateTime
+    is_total_suspension Boolean   @default(false)
+    member_id           String
+    deleted_at          DateTime?
+    member              Member    @relation(fields: [member_id], references: [id])
+
+    @@map("disciplines")
 }
