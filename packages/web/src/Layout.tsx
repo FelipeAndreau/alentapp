@@ -11,12 +11,12 @@ function Layout() {
             <Box as="nav" borderBottomWidth="1px" py="4" px="8" bg="bg.panel" boxShadow="sm" position="sticky" top="0" zIndex="docked">
                 <Flex justify="space-between" align="center" maxW="7xl" mx="auto">
                     <RouterLink to="/">
-                        <Text 
-                            fontSize="2xl" 
-                            fontWeight="bold" 
-                            bgGradient="to-r" 
-                            gradientFrom="blue.600" 
-                            gradientTo="cyan.500" 
+                        <Text
+                            fontSize="2xl"
+                            fontWeight="bold"
+                            bgGradient="to-r"
+                            gradientFrom="blue.600"
+                            gradientTo="cyan.500"
                             bgClip="text"
                         >
                             Alentapp
@@ -36,10 +36,10 @@ function Layout() {
                             </Text>
                         </RouterLink>
                         <RouterLink to="/payments">
-                            <Text 
-                                fontWeight="semibold" 
-                                fontSize="sm" 
-                                textTransform="uppercase" 
+                            <Text
+                                fontWeight="semibold"
+                                fontSize="sm"
+                                textTransform="uppercase"
                                 letterSpacing="wider"
                                 color="fg.muted"
                                 _hover={{ color: "blue.500", textDecoration: "none" }}
@@ -68,7 +68,7 @@ function Layout() {
                                 color="fg.muted"
                                 _hover={{ color: "blue.500", textDecoration: "none" }}
                             >
-                                Lockers
+                                Casilleros
                             </Text>
                         </RouterLink>
                     </HStack>
@@ -80,4 +80,5 @@ function Layout() {
         </Provider>
     );
 }
+
 export default Layout;
