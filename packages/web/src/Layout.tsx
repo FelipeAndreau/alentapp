@@ -68,11 +68,7 @@ function Layout() {
                                 color="fg.muted"
                                 _hover={{ color: "blue.500", textDecoration: "none" }}
                             >
-<<<<<<< HEAD
                                 Casilleros
-=======
-                                Lockers
->>>>>>> origin/feature/discipline-read
                             </Text>
                         </RouterLink>
                     </HStack>
@@ -84,8 +80,5 @@ function Layout() {
         </Provider>
     );
 }
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/feature/discipline-read
 export default Layout;
