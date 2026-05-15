@@ -9,7 +9,6 @@ import { PostgresDisciplineRepository } from './infrastructure/disciplines/Postg
 
 // DOMINIO (VALIDADORES Y SERVICIOS)
 import { MemberValidator } from './domain/members/services/MemberValidator.js';
-import { DisciplineValidator } from './domain/disciplines/services/DisciplineValidator.js';
 import { LockerValidator } from './domain/lockers/services/LockerValidator.js';
 import { SystemClock } from './domain/services/Clock.js';
 
@@ -35,6 +34,7 @@ import { DeleteLockerUseCase } from './application/lockers/DeleteLockerUseCase.j
 
 import { CreateDisciplineUseCase } from './application/disciplines/CreateDisciplineUseCase.js';
 import { GetDisciplinesUseCase } from './application/disciplines/GetDisciplinesUseCase.js';
+import { UpdateDisciplineUseCase } from './application/disciplines/UpdateDisciplineUseCase.js';
 
 // DELIVERY (CONTROLADORES)
 import { MemberController } from './delivery/members/MemberController.js';
@@ -125,10 +125,10 @@ export function buildApp() {
     );
 
     // 5. INICIALIZACIÓN DE DISCIPLINAS
-    const disciplineValidator = new DisciplineValidator();
-    const createDisciplineUseCase = new CreateDisciplineUseCase(disciplineRepo, memberRepo, disciplineValidator);
+    const createDisciplineUseCase = new CreateDisciplineUseCase(disciplineRepo, memberRepo);
     const getDisciplinesUseCase = new GetDisciplinesUseCase(disciplineRepo);
-    const disciplineController = new DisciplineController(createDisciplineUseCase, getDisciplinesUseCase);
+    const updateDisciplineUseCase = new UpdateDisciplineUseCase(disciplineRepo);
+    const disciplineController = new DisciplineController(createDisciplineUseCase, getDisciplinesUseCase, updateDisciplineUseCase);
 
     // --- REGISTRO DE RUTAS ---
 
@@ -155,6 +155,7 @@ export function buildApp() {
     // Rutas de Disciplinas
     server.get('/api/v1/disciplines', disciplineController.getAll.bind(disciplineController));
     server.post('/api/v1/disciplines', disciplineController.create.bind(disciplineController));
+    server.patch('/api/v1/disciplines/:id', disciplineController.update.bind(disciplineController));
 
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'Alentapp API OK' })
