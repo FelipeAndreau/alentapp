@@ -15,6 +15,10 @@ import { MarkPaymentAsPaidUseCase } from './application/payments/MarkPaymentAsPa
 import { CancelPaymentUseCase } from './application/payments/CancelPaymentUseCase.js';
 import { GetPaymentsUseCase } from './application/payments/GetPaymentsUseCase.js';
 import { PaymentController } from './delivery/PaymentController.js';
+import { PostgresDisciplineRepository } from './infrastructure/PostgresDisciplineRepository.js';
+import { CreateDisciplineUseCase } from './application/disciplines/CreateDisciplineUseCase.js';
+import { GetDisciplinesUseCase } from './application/disciplines/GetDisciplinesUseCase.js';
+import { DisciplineController } from './delivery/DisciplineController.js';
 
 export function buildApp() {
     const server = Fastify({
@@ -79,6 +83,14 @@ export function buildApp() {
     server.patch('/api/v1/payments/:id/pay', paymentController.pay.bind(paymentController));
     server.patch('/api/v1/payments/:id/cancel', paymentController.cancel.bind(paymentController));
     server.delete('/api/v1/payments/:id', paymentController.deleteBlocker.bind(paymentController));
+
+    const disciplineRepo = new PostgresDisciplineRepository();
+    const createDisciplineUseCase = new CreateDisciplineUseCase(disciplineRepo, memberRepo);
+    const getDisciplinesUseCase = new GetDisciplinesUseCase(disciplineRepo);
+    const disciplineController = new DisciplineController(createDisciplineUseCase, getDisciplinesUseCase);
+
+    server.get('/api/v1/disciplines', disciplineController.getAll.bind(disciplineController));
+    server.post('/api/v1/disciplines', disciplineController.create.bind(disciplineController));
 
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'asd' })
