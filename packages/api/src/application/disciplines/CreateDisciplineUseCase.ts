@@ -2,6 +2,7 @@ import { DisciplineRepository } from '../../domain/disciplines/DisciplineReposit
 import { MemberRepository } from '../../domain/members/MemberRepository.js';
 import { DisciplineValidator } from '../../domain/disciplines/services/DisciplineValidator.js';
 import { DisciplineDTO, CreateDisciplineRequest } from '@alentapp/shared';
+import { MemberNotFoundForDisciplineError } from '../../domain/disciplines/errors/DisciplineErrors.js';
 
 export class CreateDisciplineUseCase {
     constructor(
@@ -15,7 +16,7 @@ export class CreateDisciplineUseCase {
 
         const member = await this.memberRepository.findById(data.member_id);
         if (!member) {
-            throw new Error('No existe un socio con ese ID');
+            throw new MemberNotFoundForDisciplineError(data.member_id);
         }
 
         return await this.disciplineRepository.create(data);

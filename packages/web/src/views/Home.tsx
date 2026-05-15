@@ -39,7 +39,7 @@ export function HomeView() {
 
         <SectionCard
           title="Disciplinas"
-          description="Registra y gestiona las sanciones aplicadas a los socios del club."
+          description="Registra y consulta las sanciones aplicadas a los socios del club."
           to="/disciplines"
           icon={LuGavel}
         />
@@ -52,11 +52,11 @@ export function HomeView() {
         />
 
         {/* Future sections can be added here following the same pattern */}
-        <Box 
-          p="6" 
-          bg="bg.muted/30" 
-          borderRadius="2xl" 
-          borderWidth="1px" 
+        <Box
+          p="6"
+          bg="bg.muted/30"
+          borderRadius="2xl"
+          borderWidth="1px"
           borderColor="border.subtle"
           borderStyle="dashed"
           display="flex"

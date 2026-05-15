@@ -1,5 +1,5 @@
 // ==========================================
-// Member
+// Member (Socios)
 // ==========================================
 export type MemberCategory = 'Pleno' | 'Cadete' | 'Honorario';
 export type MemberStatus = 'Activo' | 'Moroso' | 'Suspendido';
@@ -33,7 +33,7 @@ export interface UpdateMemberRequest {
 }
 
 // ==========================================
-// Payment
+// Payment (Pagos)
 // ==========================================
 export type PaymentStatus = 'Pending' | 'Paid' | 'Canceled';
 
@@ -67,7 +67,7 @@ export interface PaymentsResponse {
 }
 
 // ========================================
-// Locker
+// Locker (Casilleros)
 // ========================================
 export type LockerStatus = 'Available' | 'Occupied' | 'Maintenance';
 
@@ -92,7 +92,7 @@ export interface UpdateLockerRequest {
 }
 
 // ==========================================
-// Discipline
+// Discipline (Disciplinas / Sanciones)
 // ==========================================
 export interface DisciplineDTO {
   id: string;
