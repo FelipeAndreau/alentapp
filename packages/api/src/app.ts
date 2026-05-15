@@ -16,16 +16,28 @@ import { CancelPaymentUseCase } from './application/payments/CancelPaymentUseCas
 import { GetPaymentsUseCase } from './application/payments/GetPaymentsUseCase.js';
 import { PaymentController } from './delivery/PaymentController.js';
 
+import { PostgresSportRepository } from './infrastructure/PostgresSportRepository.js';
+import { SportValidator } from './domain/services/SportValidator.js';
+import { CreateSportUseCase } from './application/sports/CreateSportUseCase.js';
+import { GetSportsUseCase } from './application/sports/GetSportsUseCase.js';
+import { UpdateSportUseCase } from './application/sports/UpdateSportUseCase.js';
+import { DeleteSportUseCase } from './application/sports/DeleteSportUseCase.js';
+import { SportController } from './delivery/SportController.js';
+
 export function buildApp() {
     const server = Fastify({
         logger: {
             level: 'info',
-            transport: process.env.NODE_ENV === 'development' 
-            ? {
-                target: 'pino-pretty',
-                options: { translateTime: 'HH:MM:ss Z', ignore: 'pid,hostname' },
-                } 
-            : undefined,
+            transport:
+                process.env.NODE_ENV === 'development'
+                    ? {
+                          target: 'pino-pretty',
+                          options: {
+                              translateTime: 'HH:MM:ss Z',
+                              ignore: 'pid,hostname',
+                          },
+                      }
+                    : undefined,
         },
     });
 
@@ -38,30 +50,56 @@ export function buildApp() {
 
     const memberRepo = new PostgresMemberRepository();
     const memberValidator = new MemberValidator(memberRepo);
-    
-    const createMemberUseCase = new CreateMemberUseCase(memberRepo, memberValidator);
+
+    const createMemberUseCase = new CreateMemberUseCase(
+        memberRepo,
+        memberValidator,
+    );
     const getMembersUseCase = new GetMembersUseCase(memberRepo);
-    const updateMemberUseCase = new UpdateMemberUseCase(memberRepo, memberValidator);
+    const updateMemberUseCase = new UpdateMemberUseCase(
+        memberRepo,
+        memberValidator,
+    );
     const deleteMemberUseCase = new DeleteMemberUseCase(memberRepo);
 
     const memberController = new MemberController(
-        createMemberUseCase, 
+        createMemberUseCase,
         getMembersUseCase,
         updateMemberUseCase,
-        deleteMemberUseCase
+        deleteMemberUseCase,
     );
 
-    server.get('/api/v1/socios', memberController.getAll.bind(memberController));
-    server.post('/api/v1/socios', memberController.create.bind(memberController));
-    server.put('/api/v1/socios/:id', memberController.update.bind(memberController));
-    server.delete('/api/v1/socios/:id', memberController.delete.bind(memberController));
+    server.get(
+        '/api/v1/socios',
+        memberController.getAll.bind(memberController),
+    );
+    server.post(
+        '/api/v1/socios',
+        memberController.create.bind(memberController),
+    );
+    server.put(
+        '/api/v1/socios/:id',
+        memberController.update.bind(memberController),
+    );
+    server.delete(
+        '/api/v1/socios/:id',
+        memberController.delete.bind(memberController),
+    );
+
+    // Payment endpoints
 
     const paymentRepo = new PostgresPaymentRepository();
     const systemClock = new SystemClock();
 
-    const createPaymentUseCase = new CreatePaymentUseCase(paymentRepo, memberRepo);
+    const createPaymentUseCase = new CreatePaymentUseCase(
+        paymentRepo,
+        memberRepo,
+    );
     const updatePaymentUseCase = new UpdatePaymentUseCase(paymentRepo);
-    const markPaymentAsPaidUseCase = new MarkPaymentAsPaidUseCase(paymentRepo, systemClock);
+    const markPaymentAsPaidUseCase = new MarkPaymentAsPaidUseCase(
+        paymentRepo,
+        systemClock,
+    );
     const cancelPaymentUseCase = new CancelPaymentUseCase(paymentRepo);
     const getPaymentsUseCase = new GetPaymentsUseCase(paymentRepo);
 
@@ -70,18 +108,72 @@ export function buildApp() {
         updatePaymentUseCase,
         markPaymentAsPaidUseCase,
         cancelPaymentUseCase,
-        getPaymentsUseCase
+        getPaymentsUseCase,
     );
 
-    server.get('/api/v1/payments', paymentController.getAll.bind(paymentController));
-    server.post('/api/v1/payments', paymentController.create.bind(paymentController));
-    server.patch('/api/v1/payments/:id', paymentController.update.bind(paymentController));
-    server.patch('/api/v1/payments/:id/pay', paymentController.pay.bind(paymentController));
-    server.patch('/api/v1/payments/:id/cancel', paymentController.cancel.bind(paymentController));
-    server.delete('/api/v1/payments/:id', paymentController.deleteBlocker.bind(paymentController));
+    server.get(
+        '/api/v1/payments',
+        paymentController.getAll.bind(paymentController),
+    );
+    server.post(
+        '/api/v1/payments',
+        paymentController.create.bind(paymentController),
+    );
+    server.patch(
+        '/api/v1/payments/:id',
+        paymentController.update.bind(paymentController),
+    );
+    server.patch(
+        '/api/v1/payments/:id/pay',
+        paymentController.pay.bind(paymentController),
+    );
+    server.patch(
+        '/api/v1/payments/:id/cancel',
+        paymentController.cancel.bind(paymentController),
+    );
+    server.delete(
+        '/api/v1/payments/:id',
+        paymentController.deleteBlocker.bind(paymentController),
+    );
+
+    // Sport endpoints
+
+    const sportRepo = new PostgresSportRepository();
+    const sportValidator = new SportValidator(sportRepo);
+
+    const createSportUseCase = new CreateSportUseCase(
+        sportRepo,
+        sportValidator,
+    );
+    const getSportsUseCase = new GetSportsUseCase(sportRepo);
+    const updateSportUseCase = new UpdateSportUseCase(
+        sportRepo,
+        sportValidator,
+    );
+    const deleteSportUseCase = new DeleteSportUseCase(sportRepo);
+
+    const sportController = new SportController(
+        createSportUseCase,
+        getSportsUseCase,
+        updateSportUseCase,
+        deleteSportUseCase,
+    );
+
+    server.get('/api/v1/sports', sportController.getAll.bind(sportController));
+    server.post('/api/v1/sports', sportController.create.bind(sportController));
+    server.patch(
+        '/api/v1/sports/:id',
+        sportController.update.bind(sportController),
+    );
+    server.delete(
+        '/api/v1/sports/:id',
+        sportController.delete.bind(sportController),
+    );
+
+    /////////////////////////////////////////////////////
 
     server.get('/', async (req, rep) => {
-        rep.status(200).send({ msg: 'asd' })
+        rep.status(200).send({ msg: 'asd' });
     });
 
     return server;
@@ -93,7 +185,7 @@ if (process.argv[1] && process.argv[1].endsWith('app.ts')) {
     const port = parseInt(process.env.PORT || '3000', 10);
 
     server.listen({ port, host: '0.0.0.0' }, () =>
-        server.log.info(`API server running on http://localhost:${port}`)
+        server.log.info(`API server running on http://localhost:${port}`),
     );
 
     ['SIGINT', 'SIGTERM'].forEach((signal) => {
