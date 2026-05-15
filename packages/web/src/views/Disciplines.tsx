@@ -12,7 +12,7 @@ import {
   Input,
   Badge,
 } from '@chakra-ui/react';
-import { LuPlus, LuRefreshCw } from 'react-icons/lu';
+import { LuPlus, LuRefreshCw, LuPencil } from 'react-icons/lu';
 import { useEffect, useState, useMemo } from 'react';
 import { disciplinesService } from '../services/disciplines';
 import { membersService } from '../services/members';
@@ -50,6 +50,8 @@ const formatDate = (iso: string) => {
   return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
+const toDateInput = (iso: string) => iso.split('T')[0];
+
 export function DisciplinesView() {
   const [disciplines, setDisciplines] = useState<DisciplineDTO[]>([]);
   const [members, setMembers] = useState<MemberDTO[]>([]);
@@ -58,6 +60,7 @@ export function DisciplinesView() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<CreateDisciplineRequest>({
     reason: '',
@@ -99,7 +102,21 @@ export function DisciplinesView() {
   }, []);
 
   const openCreateModal = () => {
+    setEditingId(null);
     setFormData({ reason: '', start_date: '', end_date: '', is_total_suspension: false, member_id: '' });
+    setFormErrors({});
+    setIsDialogOpen(true);
+  };
+
+  const openEditModal = (discipline: DisciplineDTO) => {
+    setEditingId(discipline.id);
+    setFormData({
+      reason: discipline.reason,
+      start_date: toDateInput(discipline.start_date),
+      end_date: toDateInput(discipline.end_date),
+      is_total_suspension: discipline.is_total_suspension,
+      member_id: discipline.member_id,
+    });
     setFormErrors({});
     setIsDialogOpen(true);
   };
@@ -108,7 +125,7 @@ export function DisciplinesView() {
     e.preventDefault();
     const errors: Record<string, string> = {};
 
-    if (!formData.member_id) errors.member_id = 'Debe seleccionar un socio';
+    if (!editingId && !formData.member_id) errors.member_id = 'Debe seleccionar un socio';
     if (!formData.reason.trim()) errors.reason = 'El motivo es obligatorio';
     if (!formData.start_date) errors.start_date = 'La fecha de inicio es obligatoria';
     if (!formData.end_date) errors.end_date = 'La fecha de fin es obligatoria';
@@ -122,13 +139,23 @@ export function DisciplinesView() {
     setIsSubmitting(true);
     setFormErrors({});
     try {
-      await disciplinesService.create(formData);
-      toaster.create({ title: 'Disciplina registrada con éxito', type: 'success' });
+      if (editingId) {
+        await disciplinesService.update(editingId, {
+          reason: formData.reason,
+          start_date: formData.start_date,
+          end_date: formData.end_date,
+          is_total_suspension: formData.is_total_suspension,
+        });
+        toaster.create({ title: 'Disciplina actualizada con éxito', type: 'success' });
+      } else {
+        await disciplinesService.create(formData);
+        toaster.create({ title: 'Disciplina registrada con éxito', type: 'success' });
+      }
       setIsDialogOpen(false);
       fetchData();
     } catch (err: any) {
       toaster.create({
-        title: 'No se pudo registrar la disciplina',
+        title: editingId ? 'No se pudo actualizar la disciplina' : 'No se pudo registrar la disciplina',
         description: err.message,
         type: 'error',
       });
@@ -205,6 +232,7 @@ export function DisciplinesView() {
                   <Table.ColumnHeader py="4">Fecha inicio</Table.ColumnHeader>
                   <Table.ColumnHeader py="4">Fecha fin</Table.ColumnHeader>
                   <Table.ColumnHeader py="4">Suspensión total</Table.ColumnHeader>
+                  <Table.ColumnHeader py="4" />
                 </Table.Row>
               </Table.Header>
               <Table.Body>
@@ -221,6 +249,11 @@ export function DisciplinesView() {
                         {d.is_total_suspension ? 'Sí' : 'No'}
                       </Badge>
                     </Table.Cell>
+                    <Table.Cell>
+                      <Button size="sm" variant="ghost" onClick={() => openEditModal(d)}>
+                        <LuPencil />
+                      </Button>
+                    </Table.Cell>
                   </Table.Row>
                 ))}
               </Table.Body>
@@ -231,13 +264,13 @@ export function DisciplinesView() {
         <DialogContent>
           <form onSubmit={handleSubmit}>
             <DialogHeader>
-              <DialogTitle>Nueva Disciplina</DialogTitle>
+              <DialogTitle>{editingId ? 'Editar Disciplina' : 'Nueva Disciplina'}</DialogTitle>
             </DialogHeader>
             <DialogBody>
               <Stack gap="4">
                 <Field
                   label="Socio"
-                  required
+                  required={!editingId}
                   invalid={!!formErrors.member_id}
                   errorText={formErrors.member_id}
                 >
@@ -245,6 +278,7 @@ export function DisciplinesView() {
                     collection={membersCollection}
                     value={formData.member_id ? [formData.member_id] : []}
                     onValueChange={(e) => setFormData({ ...formData, member_id: e.value[0] })}
+                    disabled={!!editingId}
                   >
                     <SelectTrigger>
                       <SelectValueText placeholder="Seleccione un socio" />
@@ -269,7 +303,6 @@ export function DisciplinesView() {
                     placeholder="Ej. Conducta antideportiva"
                     value={formData.reason}
                     onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                    required
                   />
                 </Field>
 
@@ -284,7 +317,6 @@ export function DisciplinesView() {
                       type="date"
                       value={formData.start_date}
                       onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                      required
                     />
                   </Field>
                   <Field
@@ -297,7 +329,6 @@ export function DisciplinesView() {
                       type="date"
                       value={formData.end_date}
                       onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                      required
                     />
                   </Field>
                 </HStack>
@@ -329,7 +360,7 @@ export function DisciplinesView() {
                 <Button variant="outline">Cancelar</Button>
               </DialogActionTrigger>
               <Button type="submit" colorPalette="blue" loading={isSubmitting}>
-                Registrar
+                {editingId ? 'Guardar cambios' : 'Registrar'}
               </Button>
             </DialogFooter>
             <DialogCloseTrigger />
