@@ -23,7 +23,7 @@ Permitir que un administrativo elimine una disciplina registrada por error o que
 
 - El sistema debe verificar que la disciplina a eliminar exista. Si no existe, debe retornar un error claro.
 - Al finalizar con éxito, el sistema debe confirmar que la disciplina fue eliminada.
-- La eliminación es física (borrado real del registro en la base de datos).
+- La eliminación es lógica. El registro no se borra físicamente sino que se marca con la fecha y hora de eliminación en el campo deleted_at. Las consultas del sistema deben ignorar los registros con deleted_at distinto de null.
 
 ---
 
@@ -31,7 +31,24 @@ Permitir que un administrativo elimine una disciplina registrada por error o que
 
 ### Modelo de Datos
 
-No se requieren cambios en el schema de Prisma. La entidad `Discipline` ya fue definida en TDD-0007.
+Se requiere agregar el campo `deleted_at` a la entidad `Discipline` en `packages/api/prisma/schema.prisma`:
+
+- `deleted_at`: DateTime, nullable. Indica la fecha y hora en que la disciplina fue eliminada lógicamente. Default `null`.
+
+```prisma
+model Discipline {
+    id                  String    @id @default(uuid())
+    reason              String
+    start_date          DateTime
+    end_date            DateTime
+    is_total_suspension Boolean   @default(false)
+    member_id           String
+    deleted_at          DateTime?
+    member              Member    @relation(fields: [member_id], references: [id])
+
+    @@map("disciplines")
+}
+```
 
 ### Contrato de API (@alentapp/shared)
 
@@ -45,10 +62,10 @@ No se requieren cambios en el schema de Prisma. La entidad `Discipline` ya fue d
   - Puerto `DisciplineRepository` (interface) — se extiende con método `delete`.
 
 - **Application**:
-  - `DeleteDisciplineUseCase`: busca la disciplina via `DisciplineRepository.findById`, lanza error si no existe, y elimina via `DisciplineRepository.delete`.
+  - `DeleteDisciplineUseCase`: busca la disciplina via `DisciplineRepository.findById`, lanza error si no existe, y elimina lógicamente via `DisciplineRepository.delete` seteando `deleted_at` con la fecha y hora actual.
 
 - **Infrastructure**:
-  - `PostgresDisciplineRepository`: se extiende con la implementación del método `delete` usando Prisma.
+  - `PostgresDisciplineRepository`: se extiende con la implementación del método `delete` usando Prisma, actualizando `deleted_at` en lugar de eliminar el registro.
   - `DisciplineController`: registra la ruta `DELETE /api/v1/disciplines/:id` en Fastify y delega al caso de uso.
 
 ---
@@ -65,7 +82,8 @@ No se requieren cambios en el schema de Prisma. La entidad `Discipline` ya fue d
 
 ## Plan de Implementación
 
-1. Extender puerto `DisciplineRepository` con método `delete`.
-2. Implementar `DeleteDisciplineUseCase` en Aplicación.
-3. Extender `PostgresDisciplineRepository` con método `delete`.
-4. Implementar ruta `DELETE` en `DisciplineController`.
+1. Agregar campo `deleted_at` al modelo `Discipline` en `schema.prisma`.
+2. Extender puerto `DisciplineRepository` con método `delete`.
+3. Implementar `DeleteDisciplineUseCase` en Aplicación.
+4. Extender `PostgresDisciplineRepository` con método `delete`.
+5. Implementar ruta `DELETE` en `DisciplineController`.
