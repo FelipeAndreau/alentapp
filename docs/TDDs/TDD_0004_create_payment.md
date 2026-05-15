@@ -95,8 +95,6 @@ model Payment {
   member        Member    @relation(fields: [member_id], references: [id])
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
-
-  @@unique([member_id, month, year])
 }
 ```
 
@@ -125,7 +123,7 @@ export interface IPaymentRepository {
 2. **Comprobar reglas de negocio:**
    - Verificar que el `member_id` corresponde a un socio existente (consultar MemberRepository)
    - Verificar que el estado del socio NO sea "Suspendido".
-   - Validar que no exista un pago duplicado (Pending o Paid) para el mismo socio en el mismo periodo (mes/ano) usando `findActiveInPeriod()`
+   - **Validar duplicados activos:** Verificar que no exista un pago con estado `Pending` o `Paid` para el mismo socio en el mismo periodo (mes/ano). Si existen pagos `Canceled`, se permite crear uno nuevo.
 
 3. **Mapear DTO a Entidad de Dominio:**
    - Asignar estado inicial `"Pending"`
@@ -151,6 +149,6 @@ export interface IPaymentRepository {
 
 - Se recomienda usar la libreria `date-fns` para validaciones de fechas
 - Se recomienda usar `zod` para validar el DTO de entrada
-- El campo `@@unique([member_id, month, year])` previene la facturacion duplicada
+- La validacion de duplicados se hace a nivel de aplicacion buscando pagos que no esten cancelados, permitiendo asi re-emitir cuotas si la anterior fue anulada.
 - Los timestamps `created_at` y `updated_at` se generan automaticamente en Prisma
 - La relacion con `Member` debe estar configurada correctamente en el modelo de dominio
