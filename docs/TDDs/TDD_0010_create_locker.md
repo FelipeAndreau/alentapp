@@ -25,6 +25,8 @@ Permitir que un administrativo registre un nuevo casillero en el sistema del clu
 - El campo `status` por defecto debe ser `Available`.
 - El campo `member_id` debe quedar en `null` al momento de la creación.
 - Al finalizar con éxito, el sistema debe retornar el casillero creado con su `id` generado.
+- El número de casillero debe ser un entero estrictamente mayor a 0. Si se provee un número menor o igual a 0, el sistema debe rechazar la operación.
+- El campo location no puede estar vacío ni contener solo espacios. Si se provee un valor inválido, el sistema debe rechazar la operación.
 
 ---
 
@@ -112,6 +114,8 @@ npx prisma migrate dev --name create_lockers_table
 | `number` duplicado | Error: "Ya existe un casillero con ese número" | 409 Conflict |
 | Campos requeridos ausentes en el body | Error de validación de schema | 400 Bad Request |
 | Error de conexión a la base de datos | Error: "Error interno, reintente más tarde" | 500 Internal Server Error |
+| `number` menor o igual a 0 | Error: "El número de casillero debe ser mayor a 0" | 400 Bad Request |
+| `location` vacío o solo espacios | Error: "El campo location no puede estar vacío" | 400 Bad Request |
 
 ---
 
