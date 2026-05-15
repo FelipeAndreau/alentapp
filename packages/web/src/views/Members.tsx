@@ -15,7 +15,8 @@ import {
 import { LuPlus, LuPencil, LuTrash2, LuRefreshCw } from "react-icons/lu";
 import { useEffect, useState } from "react";
 import { membersService } from "../services/members";
-import type { MemberDTO, CreateMemberRequest, UpdateMemberRequest, MemberCategory, MemberStatus } from "@alentapp/shared";
+import { paymentsService } from "../services/payments";
+import type { MemberDTO, CreateMemberRequest, UpdateMemberRequest, MemberCategory, MemberStatus, PaymentDTO } from "@alentapp/shared";
 import { 
   DialogRoot, 
   DialogContent, 
@@ -47,13 +48,13 @@ const categories = createListCollection({
 const statusCategories = createListCollection({
   items: [
     { label: "Activo", value: "Activo" },
-    { label: "Moroso", value: "Moroso" },
     { label: "Suspendido", value: "Suspendido" },
   ],
 });
 
 export function MembersView() {
   const [members, setMembers] = useState<MemberDTO[]>([]);
+  const [payments, setPayments] = useState<PaymentDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -71,14 +72,18 @@ export function MembersView() {
     category: "Pleno",
   });
 
-  const fetchMembers = async () => {
+  const fetchData = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await membersService.getAll();
-      setMembers(data);
+      const [membersData, paymentsData] = await Promise.all([
+        membersService.getAll(),
+        paymentsService.getAll()
+      ]);
+      setMembers(membersData);
+      setPayments(paymentsData);
     } catch (err: any) {
-      setError(err.message || "Error al cargar los miembros");
+      setError(err.message || "Error al cargar los datos");
     } finally {
       setIsLoading(false);
     }
@@ -113,7 +118,7 @@ export function MembersView() {
         await membersService.create(formData as CreateMemberRequest);
       }
       setIsDialogOpen(false);
-      fetchMembers(); // Refresh the list
+      fetchData(); // Refresh the list
     } catch (err: any) {
       alert(err.message || "Error al guardar el miembro");
     } finally {
@@ -125,7 +130,7 @@ export function MembersView() {
     if (window.confirm(`¿Estás seguro de que deseas eliminar al miembro "${name}"? Esta acción no se puede deshacer.`)) {
       try {
         await membersService.delete(id);
-        fetchMembers(); // Refresh the list
+        fetchData(); // Refresh the list
       } catch (err: any) {
         alert(err.message || "Error al eliminar el miembro");
       }
@@ -133,8 +138,28 @@ export function MembersView() {
   };
 
   useEffect(() => {
-    fetchMembers();
+    fetchData();
   }, []);
+
+  const getMemberStatus = (member: MemberDTO): { status: string; color: string; bg: string } => {
+    if (member.status === 'Suspendido') {
+      return { status: 'Suspendido', color: 'red.700', bg: 'red.50' };
+    }
+
+    const isMoroso = payments.some(p => {
+      if (p.member_id !== member.id || p.status !== 'Pending') return false;
+      const dueDate = new Date(p.due_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Normalize today
+      return dueDate < today;
+    });
+
+    if (isMoroso) {
+      return { status: 'Moroso', color: 'orange.700', bg: 'orange.50' };
+    }
+
+    return { status: 'Activo', color: 'green.700', bg: 'green.50' };
+  };
 
   return (
     <DialogRoot open={isDialogOpen} onOpenChange={(e) => setIsDialogOpen(e.open)}>
@@ -147,7 +172,7 @@ export function MembersView() {
             </Text>
           </Stack>
           <HStack gap="3">
-            <Button variant="outline" onClick={fetchMembers} disabled={isLoading}>
+            <Button variant="outline" onClick={fetchData} disabled={isLoading}>
               <LuRefreshCw /> Actualizar
             </Button>
             <Button colorPalette="blue" size="md" onClick={openCreateModal}>
@@ -217,14 +242,14 @@ export function MembersView() {
                 </Field>
                 
                 {editingMemberId && formData.status && (
-                  <Field label="Estado" required>
+                  <Field label="Estado Base" required>
                     <SelectRoot 
                       collection={statusCategories} 
                       value={[formData.status]}
                       onValueChange={(e) => setFormData({ ...formData, status: e.value[0] as MemberStatus })}
                     >
                       <SelectTrigger>
-                        <SelectValueText placeholder="Seleccione el estado" />
+                        <SelectValueText placeholder="Seleccione el estado base" />
                       </SelectTrigger>
                       <SelectContent>
                         {statusCategories.items.map((stat) => (
@@ -234,6 +259,9 @@ export function MembersView() {
                         ))}
                       </SelectContent>
                     </SelectRoot>
+                    <Text fontSize="xs" color="gray.500" mt={1}>
+                      * El estado "Moroso" se calcula automáticamente en base a las cuotas vencidas.
+                    </Text>
                   </Field>
                 )}
               </Stack>
@@ -277,7 +305,7 @@ export function MembersView() {
           <Center h="300px">
             <Stack align="center" gap="4">
               <Text color="fg.muted">No se encontraron miembros.</Text>
-              <Button variant="ghost" onClick={fetchMembers}>Reintentar</Button>
+              <Button variant="ghost" onClick={fetchData}>Reintentar</Button>
             </Stack>
           </Center>
         ) : (
@@ -294,7 +322,9 @@ export function MembersView() {
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {members.map((member) => (
+              {members.map((member) => {
+                const derivedStatus = getMemberStatus(member);
+                return (
                 <Table.Row key={member.id} _hover={{ bg: "bg.muted/30" }}>
                   <Table.Cell fontWeight="semibold" color="fg.emphasized">
                     {member.name}
@@ -322,12 +352,12 @@ export function MembersView() {
                       px="2" 
                       py="0.5" 
                       borderRadius="md" 
-                      bg={member.status === 'Activo' ? 'green.50' : 'orange.50'} 
-                      color={member.status === 'Activo' ? 'green.700' : 'orange.700'} 
+                      bg={derivedStatus.bg} 
+                      color={derivedStatus.color} 
                       fontSize="xs" 
                       fontWeight="bold"
                     >
-                      {member.status}
+                      {derivedStatus.status}
                     </Box>
                   </Table.Cell>
                   <Table.Cell textAlign="end">
@@ -352,7 +382,7 @@ export function MembersView() {
                     </HStack>
                   </Table.Cell>
                 </Table.Row>
-              ))}
+              )})}
             </Table.Body>
           </Table.Root>
         )}

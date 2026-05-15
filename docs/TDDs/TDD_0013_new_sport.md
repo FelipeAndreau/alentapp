@@ -1,5 +1,5 @@
 ---
-id: 0013
+id: 13
 estado: Propuesto
 autor: Maximo Carpignano
 fecha: 2026-04-30
@@ -24,8 +24,14 @@ Permitir a los administrativos registrar un nuevo deporte en el sistema de forma
 - El sistema debe validar que `name` sea único (no puede existir otro deporte con el mismo nombre).
 - El sistema debe validar que `max_capacity` sea un número entero estrictamente mayor a cero.
 - El sistema debe validar que `name` no esté vacío.
+- El sistema debe validar que `additional_price` sea mayor o igual a cero.
+- El sistema debe validar que `requires_medical_certificate` sea un valor booleano.
+- El deporte debe quedar guardado con su `id` generado automáticamente.
+- El deporte se crea con `deleted_at` en `null`, indicando que está activo (no eliminado lógicamente).
 - Al finalizar, el sistema debe mostrar un mensaje de éxito y limpiar el formulario.
 - El deporte debe quedar guardado con todos sus campos correctamente persistidos.
+
+---
 
 ## Diseño Técnico (RFC)
 
@@ -39,6 +45,7 @@ Se definirá la entidad `Sport` con las siguientes propiedades y restricciones:
 - `max_capacity`: Entero, debe ser estrictamente mayor a cero.
 - `additional_price`: Número de punto flotante, representa el costo adicional de inscripción.
 - `requires_medical_certificate`: Booleano, indica si el deporte requiere certificado médico vigente para inscribirse.
+- `deleted_at`: DateTime, Marca de baja lógica. `null` indica que el deporte está activo; si tiene valor, indica que fue eliminado lógicamente (soft delete).
 
 ### Contrato de API (@alentapp/shared)
 
@@ -48,7 +55,17 @@ Definiremos los tipos en el paquete compartido para asegurar sincronización ent
 - **Request Body** (`CreateSportRequest`):
 
 ```ts
-{
+export interface SportDTO {
+    id: string; //UUID
+    name: string; //Nombre único del deporte
+    description?: string; //Descripción del deporte
+    max_capacity: number; //Cupo máximo, debe ser > 0
+    additional_price: number; //Precio adicional debe ser >= 0
+    requires_medical_certificate: boolean; //Indica si requiere certificado médico
+    deleted_at: string | null; //ISO DateTime String. null = activo; con valor = eliminado lógicamente
+}
+
+export interface CreateSportRequest {
     name: string;
     description?: string;
     max_capacity: number;
@@ -57,11 +74,25 @@ Definiremos los tipos en el paquete compartido para asegurar sincronización ent
 }
 ```
 
+- **Response exitosa** (`201 Created`):
+
+```ts
+{
+    data: SportDTO;
+}
+```
+
 ### Componentes de Arquitectura Hexagonal
 
-- **Domain**: Entidad `Sport`. Regla de negocio: `max_capacity > 0`. Interfaz `SportRepository` con método `create(sport)` y `findByName(name)`.
-- **Application**: Caso de uso `CreateSportUseCase`. Verifica unicidad del nombre vía `findByName` antes de persistir. Lanza excepción de dominio si ya existe o si `max_capacity <= 0`.
-- **Infrastructure**: `PostgresSportRepository` (implementación de `SportRepository` usando Prisma). `SportController` (ruta HTTP `POST /api/v1/sports` en Fastify, mapea excepciones a códigos HTTP).
+- **Domain**: el puerto `SportRepository` define el contrato de persistencia. El servicio `SportValidator` (o una entidad `Sport`) concentra las reglas de negocio: `name` obligatorio y único (coordinado con el repositorio para la unicidad), `max_capacity` entero mayor a cero, `additional_price` mayor o igual a cero. Al crear un deporte, `deleted_at` se inicializa en `null`. El puerto se define completo desde el inicio para que los casos de uso de alta, modificación, baja y consulta compartan la misma interfaz.
+
+- **Application**: `NewSportUseCase` orquesta el flujo sin conocer HTTP ni la base de datos: aplica validaciones, verifica duplicados por `name` y delega la persistencia al repositorio.
+
+- **Infrastructure**: `PostgresSportRepository` implementa el puerto con Prisma, persiste el alta, mapea el resultado a `SportDTO` y captura errores de unicidad sobre `name`, traduciéndolos a errores de dominio comprensibles.
+
+- **Delivery**: `SportController` expone `POST /api/v1/sports`, valida el body tipado como `CreateSportRequest`, delega al caso de uso y devuelve `201 Created` con `{ data: SportDTO }`. La ruta y las dependencias se registran en `app.ts`.
+
+---
 
 ## Casos de Borde y Errores
 
@@ -75,9 +106,16 @@ Definiremos los tipos en el paquete compartido para asegurar sincronización ent
 
 ## Plan de Implementación
 
-1. Definir los tipos `CreateSportRequest` y `SportResponse` en el paquete `@alentapp/shared`.
-2. Crear la interfaz `SportRepository` en el Dominio con los métodos `create` y `findByName`.
-3. Implementar `PostgresSportRepository` usando Prisma en la capa de Infraestructura.
-4. Implementar `CreateSportUseCase` con validación de unicidad de nombre y de `max_capacity > 0`.
-5. Crear el endpoint `POST /api/v1/sports` en `SportController` y registrarlo en `app.ts`.
-6. Crear el formulario en React y conectarlo con el endpoint del backend.
+1. Agregar `SportDTO` y `CreateSportRequest` al paquete `@alentapp/shared` (`packages/shared/index.ts`).
+2. Modificar el esquema de persistencia (`schema.prisma`): agregar el modelo `Sport`, incluyendo `deleted_at` como campo nullable para soportar baja lógica.
+3. Ejecutar la migración de base de datos con el nombre `create_sports_table`.
+4. Crear el puerto `SportRepository.ts` en `src/domain/` con los métodos necesarios para el ciclo de vida de `Sport`: `create`, `findById`, `findByName`, `findAll`, `update` y `softDelete`.
+5. Crear el servicio de dominio `SportValidator.ts` en `src/domain/services/`, encapsulando las reglas: `name` obligatorio y único, `max_capacity` > 0, `additional_price` >= 0.
+6. Implementar `NewSportUseCase.ts` en `src/application/`.
+7. Implementar `PostgresSportRepository.ts` en `src/infrastructure/`, con método `create` y mapeo a `SportDTO`.
+8. Crear `SportController.ts` en `src/delivery/` con el método `create` y mapeo de errores.
+9. Registrar las dependencias y la ruta `POST /api/v1/sports` en `src/app.ts`.
+10. Agregar el método `create` al servicio frontend.
+11. Crear o actualizar la vista de deportes con el formulario de alta.
+12. Escribir tests unitarios para el caso de uso.
+13. Escribir tests de integración para el endpoint `POST /api/v1/sports`.

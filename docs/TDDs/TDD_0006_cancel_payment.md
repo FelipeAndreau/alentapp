@@ -1,6 +1,6 @@
 ---
 id: 0006
-estado: Propuesto
+estado: Implementado
 autor: Felipe Andreau
 fecha: 2026-04-30
 titulo: Anulacion de Cuotas (Inmutabilidad)
@@ -96,9 +96,9 @@ interface Payment {
 ### Definicion del Puerto (Repository Interface)
 
 ```ts
-interface IPaymentRepository {
-  findById(id: string): Promise<Payment | null>;
-  updateStatus(id: string, status: string, paymentDate?: Date | null): Promise<Payment>;
+export interface IPaymentRepository {
+  findById(id: string): Promise<PaymentDTO | null>;
+  update(payment: PaymentDTO): Promise<PaymentDTO>;
   // Nota: NO debe incluir un metodo delete() generico
 }
 ```
@@ -119,7 +119,7 @@ interface IPaymentRepository {
    - Limpiar `payment_date` a `null` (el pago nunca se efectuo)
 
 4. **Persistir cambios:**
-   - Llamar a `updateStatus()` del repositorio
+   - Llamar a `update()` del repositorio pasando el objeto actualizado
    - Retornar el pago actualizado
 
 ### Controlador (PaymentController)

@@ -1,5 +1,5 @@
 ---
-id: 0014
+id: 14
 estado: Propuesto
 autor: Maximo Carpignano
 fecha: 2026-04-30
@@ -24,7 +24,7 @@ Permitir a los administrativos modificar la información de un deporte existente
 - El sistema debe permitir actualizar únicamente `description` y `max_capacity`.
 - El sistema **no debe exponer** el campo `name` como editable en ninguna parte del flujo (ni en el frontend ni en el backend).
 - El sistema debe validar que `max_capacity` sea estrictamente mayor a cero si se envía en la solicitud.
-- El sistema debe validar que el deporte exista antes de intentar actualizarlo.
+- El sistema debe validar que el deporte esté activo (`deleted_at` en `null`) antes de permitir su modificación.
 - Si la edición es correcta, debe retornar los datos actualizados del deporte.
 
 ## Diseño Técnico (RFC)
@@ -32,28 +32,41 @@ Permitir a los administrativos modificar la información de un deporte existente
 ### Contrato de API (@alentapp/shared)
 
 Solo los campos editables se incluyen en el cuerpo de la petición. `name` está explícitamente excluido del tipo de request para reforzar la inmutabilidad a nivel de contrato.
+Ademas se utilizara el paquete compartido para definir el cuerpo de la petición. Todos los campos permitidos son opcionales porque se trata de una actualización parcial.
+Se reutiliza `SportDTO`, definido en el TDD de new deporte, como contrato de respuesta común para la entidad.
 
-- **Endpoint**: `PUT /api/v1/sports/:id`
-- **Request Body** (`UpdateSportRequest`):
+- **Endpoint**: `PATCH /api/v1/sports/:id`
+- **Request Body** (`UpdateSportRequest`)
 
 ```ts
-{
+export interface UpdateSportRequest {
     description?: string;
     max_capacity?: number;
 }
 ```
 
+- Response Body (SportDTO dentro de `{ data }`): `200: OK`:
+
+```ts
+{
+    data: SportDTO;
+}
+```
+
 ### Componentes de Arquitectura Hexagonal
 
-- **Domain**: Interfaz `SportRepository` extendida con método `update(id, data)` y `findById(id)`. Regla de negocio: `max_capacity > 0` si se provee. El campo `name` no forma parte del tipo de actualización.
-- **Application**: Caso de uso `UpdateSportUseCase`. Verifica existencia del deporte via `findById`. Valida que `max_capacity > 0` si viene en el payload. Delega persistencia al repositorio.
-- **Infrastructure**: `PostgresSportRepository` (implementación del método `update` usando Prisma, que opera únicamente sobre `description` y `max_capacity`). `SportController` (ruta HTTP `PUT /api/v1/sports/:id`, extrae el `id` de la URL y mapea excepciones a códigos HTTP).
+1. **Puerto**: `SportRepository` (Interfaz en el Dominio con métodos `findById(id)` y `update(id, data)`). Permite que el caso de uso trabaje contra una abstracción y no dependa directamente de Prisma.
+2. **Servicio de Dominio / Entidad**: `Sport` o `SportValidator` (Encargado de aplicar las reglas de negocio propias de la entidad). En esta operación debe garantizar que `name` no pueda modificarse después de la creación, que `max_capacity` sea mayor a cero , que `additional_price` no sea negativo y que no se modifiquen deportes eliminados lógicamente.
+3. **Caso de Uso**: `UpdateSportUseCase` (Orquesta la operación). Recibe el `id` y el body del request, verifica que el deporte exista y que esté activo (`deleted_at` en `null`), valida los campos enviados, rechaza cualquier intento de modificar `name` y llama al repositorio para persistir los cambios.
+4. **Adaptador de Salida**: `PostgresSportRepository` (Implementación real en BD usando Prisma). Ejecuta la actualización sobre la tabla `Sport` y expone los métodos definidos por el puerto.
+5. **Adaptador de Entrada**: `SportController` (Ruta HTTP `PATCH /api/v1/sports/:id`). Extrae el `id` de la URL, valida el body tipado como `UpdateSportRequest`, invoca el caso de uso y mapea excepciones a códigos HTTP.
 
 ## Casos de Borde y Errores
 
 | Escenario                       | Resultado Esperado                                       | Código HTTP actual        |
 | ------------------------------- | -------------------------------------------------------- | ------------------------- |
 | Deporte inexistente             | Mensaje: "El deporte no existe"                          | 404 Not Found             |
+| Deporte eliminado lógicamente   | Mensaje: "No se puede modificar un deporte eliminado"    | 409 Conflict              |
 | `max_capacity` igual a cero     | Mensaje: "La capacidad máxima debe ser mayor a cero"     | 400 Bad Request           |
 | `max_capacity` negativo         | Mensaje: "La capacidad máxima debe ser mayor a cero"     | 400 Bad Request           |
 | Body vacío (sin campos válidos) | No se realiza ningún cambio, se retorna el estado actual | 200 OK                    |
@@ -61,9 +74,12 @@ Solo los campos editables se incluyen en el cuerpo de la petición. `name` está
 
 ## Plan de Implementación
 
-1. Actualizar las interfaces en el paquete `@alentapp/shared` agregando el tipo `UpdateSportRequest` (sin el campo `name`).
-2. Ampliar la interfaz `SportRepository` en el Dominio con los métodos `update(id, data)` y `findById(id)`.
-3. Implementar los métodos en `PostgresSportRepository` usando Prisma.
-4. Implementar `UpdateSportUseCase` con validación de existencia y de `max_capacity > 0`.
-5. Crear el endpoint `PUT /api/v1/sports/:id` en `SportController` y registrarlo en `app.ts`.
-6. Reutilizar o adaptar el modal del frontend para la edición, mostrando únicamente los campos `description` y `max_capacity` (ocultando `name`).
+1. Crear el tipo `UpdateSportRequest` en `@alentapp/shared`, incluyendo únicamente los campos editables: `description`, `max_capacity`, `additional_price` y `requires_medical_certificate`.
+2. Agregar el método `update(id, data)` al puerto `SportRepository` y asegurar que exista un método `findById(id)` para validar la existencia del deporte y su estado de baja lógica.
+3. Implementar las validaciones de dominio para impedir la modificación de `name`, validar que `max_capacity` sea mayor a cero, que `additional_price` sea mayor o igual a cero y que no se modifiquen deportes eliminados lógicamente.
+4. Implementar `UpdateSportUseCase`, verificando existencia del deporte, que esté activo (`deleted_at` en `null`), body no vacío, campos permitidos y reglas de negocio antes de persistir.
+5. Implementar el método `update` en `PostgresSportRepository` usando Prisma.
+6. Implementar el endpoint `PATCH /api/v1/sports/:id` en `SportController` y registrarlo en Fastify.
+7. Crear o reutilizar el formulario/modal de edición en React, deshabilitando o excluyendo el campo `name`.
+8. Escribir tests unitarios para el caso de uso: deporte inexistente, deporte eliminado, intento de modificar `name`, `max_capacity` inválido, `additional_price` inválido, body vacío y actualización exitosa.
+9. Escribir tests de integración para el endpoint.
