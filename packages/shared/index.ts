@@ -87,8 +87,6 @@ export interface CreateSportRequest {
     requires_medical_certificate: boolean;
 }
 
-// UpdateSportRequest: según TDD-0014, el 'name' es inmutable post-creación,
-// por eso no se incluye aquí para actualizarlo.
 export interface UpdateSportRequest {
     description?: string;
     max_capacity?: number;
