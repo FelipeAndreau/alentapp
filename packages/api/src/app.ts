@@ -19,6 +19,7 @@ import { MarkPaymentAsPaidUseCase } from './application/payments/MarkPaymentAsPa
 import { CancelPaymentUseCase } from './application/payments/CancelPaymentUseCase.js';
 import { GetPaymentsUseCase } from './application/payments/GetPaymentsUseCase.js';
 import { PaymentController } from './delivery/PaymentController.js';
+import { NotFoundError, ValidationError, ConflictError } from './domain/errors/PaymentErrors.js';
 
 export function buildApp() {
     const server = Fastify({
@@ -38,6 +39,20 @@ export function buildApp() {
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
+    });
+
+    server.setErrorHandler((error, request, reply) => {
+        if (error instanceof NotFoundError) {
+            return reply.status(404).send({ error: error.message, code: (error as any).code });
+        }
+        if (error instanceof ValidationError) {
+            return reply.status(400).send({ error: error.message, code: (error as any).code });
+        }
+        if (error instanceof ConflictError) {
+            return reply.status(409).send({ error: error.message, code: (error as any).code });
+        }
+        request.log.error({ err: error }, 'Unhandled error');
+        return reply.status(500).send({ error: 'Internal server error' });
     });
 
     const memberRepo = new PostgresMemberRepository();
