@@ -25,40 +25,18 @@ enum MemberStatus {
 }
 
 model Member {
-    id         String         @id @default(uuid())
-    dni        String         @unique
-    name       String
-    email      String         @unique
-    birthdate  DateTime?      @db.Date
-    category   MemberCategory
-    status     MemberStatus   @default(Activo)
-    created_at DateTime       @default(now())
-    payments     Payment[]
-    disciplines  Discipline[]
+    id          String         @id @default(uuid())
+    dni         String         @unique
+    name        String
+    email       String         @unique
+    birthdate   DateTime?      @db.Date
+    category    MemberCategory
+    status      MemberStatus   @default(Activo)
+    created_at  DateTime       @default(now())
+    payments    Payment[]
+    disciplines Discipline[]
 
-    @@map("members") // Para que en la DB la tabla se llame 'members' en minúscula
-}
-
-enum PaymentStatus {
-    Pending
-    Paid
-    Canceled
-}
-
-model Payment {
-    id            String        @id @default(uuid())
-    amount        Decimal       @db.Decimal(12, 2)
-    month         Int
-    year          Int
-    status        PaymentStatus @default(Pending)
-    due_date      DateTime      @db.Date
-    payment_date  DateTime? 
-    member_id     String
-    member        Member        @relation(fields: [member_id], references: [id])
-    created_at    DateTime      @default(now())
-    updated_at    DateTime      @updatedAt
-
-    @@map("payments")
+    @@map("members")
 }
 
 model Discipline {
@@ -72,4 +50,26 @@ model Discipline {
     member              Member    @relation(fields: [member_id], references: [id])
 
     @@map("disciplines")
+}
+
+enum PaymentStatus {
+    Pending
+    Paid
+    Canceled
+}
+
+model Payment {
+    id           String        @id @default(uuid())
+    amount       Decimal       @db.Decimal(12, 2)
+    month        Int
+    year         Int
+    status       PaymentStatus @default(Pending)
+    due_date     DateTime      @db.Date
+    payment_date DateTime?
+    member_id    String
+    member       Member        @relation(fields: [member_id], references: [id])
+    created_at   DateTime      @default(now())
+    updated_at   DateTime      @updatedAt
+
+    @@map("payments")
 }
