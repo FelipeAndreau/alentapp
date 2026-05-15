@@ -65,3 +65,28 @@ export interface PaymentResponse {
 export interface PaymentsResponse {
   data: PaymentDTO[];
 }
+
+// ========================================
+// Locker
+// ========================================
+export type LockerStatus = 'Available' | 'Occupied' | 'Maintenance';
+
+export interface LockerDTO {
+  id: string;
+  number: number;
+  location: string;
+  status: LockerStatus;
+  member_id: string | null;
+}
+
+export interface CreateLockerRequest {
+  number: number;
+  location: string;
+  status?: LockerStatus;
+}
+
+export interface UpdateLockerRequest {
+  location?: string;
+  status?: LockerStatus;
+  member_id?: string | null;
+}

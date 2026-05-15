@@ -24,7 +24,7 @@ Permitir que un administrativo elimine un casillero del sistema, siempre que no 
 - El sistema debe impedir la eliminación de un casillero que tenga un socio asignado (`member_id` distinto de `null`).
 - Si el casillero no existe, el sistema debe retornar un error.
 - Al finalizar con éxito, el sistema debe retornar un mensaje de confirmación.
-- Los casilleros pueden ser eliminados libremente siempre que su member_id sea null, sin importar si su status es Available o Maintenance.
+- Los casilleros pueden ser eliminados libremente siempre que su `member_id` sea `null`, sin importar si su status es `Available` o `Maintenance`.
 
 ---
 
