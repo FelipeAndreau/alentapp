@@ -3,7 +3,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../app.js';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../generated/client/client.js';
+import { PrismaClient } from '../../generated/client/client.js';
 
 describe('Member API End-to-End Tests', () => {
     let app: FastifyInstance;

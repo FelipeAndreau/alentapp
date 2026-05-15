@@ -1,6 +1,6 @@
-import { IPaymentRepository } from '../domain/IPaymentRepository.js';
+import { IPaymentRepository } from '../domain/payments/IPaymentRepository.js';
 import { PaymentDTO, PaymentStatus } from '@alentapp/shared';
-import { prisma } from './PrismaClient.js';
+import { prisma } from '../../infrastructure/PrismaClient.js';
 
 export class PostgresPaymentRepository implements IPaymentRepository {
     async save(payment: Omit<PaymentDTO, 'id' | 'created_at' | 'updated_at'>): Promise<PaymentDTO> {

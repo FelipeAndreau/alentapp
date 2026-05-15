@@ -1,6 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../generated/client/client.js';
-import { LockerRepository } from '../domain/LockerRepository.js';
+import { PrismaClient } from '../../generated/client/client.js';
+import { LockerRepository } from '../domain/lockers/LockerRepository.js';
 import { LockerDTO, CreateLockerRequest, UpdateLockerRequest } from '@alentapp/shared';
 
 if (!process.env.DATABASE_URL) {

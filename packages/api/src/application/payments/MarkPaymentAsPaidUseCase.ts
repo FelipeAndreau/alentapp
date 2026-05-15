@@ -1,7 +1,7 @@
-import { IPaymentRepository } from '../../domain/IPaymentRepository.js';
+import { IPaymentRepository } from '../../domain/payments/IPaymentRepository.js';
 import { IClock } from '../../domain/services/Clock.js';
 import { PaymentDTO } from '@alentapp/shared';
-import { PaymentNotFoundError, PaymentAlreadyCanceledError } from '../../domain/errors/PaymentErrors.js';
+import { PaymentNotFoundError, PaymentAlreadyCanceledError } from '../../domain/payments/errors/PaymentErrors.js';
 
 export class MarkPaymentAsPaidUseCase {
   constructor(

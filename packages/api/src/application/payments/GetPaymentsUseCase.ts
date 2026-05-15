@@ -1,4 +1,4 @@
-import { IPaymentRepository } from '../../domain/IPaymentRepository.js';
+import { IPaymentRepository } from '../../domain/payments/IPaymentRepository.js';
 import { PaymentDTO } from '@alentapp/shared';
 
 export class GetPaymentsUseCase {

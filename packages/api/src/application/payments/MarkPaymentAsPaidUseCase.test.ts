@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { MarkPaymentAsPaidUseCase } from './MarkPaymentAsPaidUseCase.js';
-import { IPaymentRepository } from '../../domain/IPaymentRepository.js';
+import { IPaymentRepository } from '../../domain/payments/IPaymentRepository.js';
 import { IClock } from '../../domain/services/Clock.js';
 import { PaymentDTO } from '@alentapp/shared';
 

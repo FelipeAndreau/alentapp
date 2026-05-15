@@ -1,8 +1,8 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { CreateMemberUseCase } from '../application/NewMemberUseCase.js';
-import { GetMembersUseCase } from '../application/GetMembersUseCase.js';
-import { UpdateMemberUseCase } from '../application/UpdateMemberUseCase.js';
-import { DeleteMemberUseCase } from '../application/DeleteMemberUseCase.js';
+import { CreateMemberUseCase } from './application/members/NewMemberUseCase.js';
+import { GetMembersUseCase } from './application/members/GetMembersUseCase.js';
+import { UpdateMemberUseCase } from './application/members/UpdateMemberUseCase.js';
+import { DeleteMemberUseCase } from './application/members/DeleteMemberUseCase.js';
 import { CreateMemberRequest, UpdateMemberRequest } from '@alentapp/shared';
 
 export class MemberController {

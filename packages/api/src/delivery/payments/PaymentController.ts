@@ -10,7 +10,7 @@ import {
     ConflictError, 
     ValidationError,
     DomainError
-} from '../domain/errors/PaymentErrors.js';
+} from '../../domain/payments/errors/PaymentErrors.js';
 
 export class PaymentController {
     constructor(

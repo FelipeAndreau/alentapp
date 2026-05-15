@@ -1,27 +1,27 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { PostgresMemberRepository } from './infrastructure/PostgresMemberRepository.js';
-import { MemberValidator } from './domain/services/MemberValidator.js';
-import { CreateMemberUseCase } from './application/NewMemberUseCase.js';
-import { GetMembersUseCase } from './application/GetMembersUseCase.js';
-import { UpdateMemberUseCase } from './application/UpdateMemberUseCase.js';
-import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
-import { MemberController } from './delivery/MemberController.js';
-import { PostgresPaymentRepository } from './infrastructure/PostgresPaymentRepository.js';
+import { PostgresMemberRepository } from './infrastructure/members/PostgresMemberRepository.js';
+import { MemberValidator } from './domain/members/services/MemberValidator.js';
+import { CreateMemberUseCase } from './application/members/NewMemberUseCase.js';
+import { GetMembersUseCase } from './application/members/GetMembersUseCase.js';
+import { UpdateMemberUseCase } from './application/members/UpdateMemberUseCase.js';
+import { DeleteMemberUseCase } from './application/members/DeleteMemberUseCase.js';
+import { MemberController } from './delivery/members/MemberController.js';
+import { PostgresPaymentRepository } from './infrastructure/payments/PostgresPaymentRepository.js';
 import { SystemClock } from './domain/services/Clock.js';
 import { CreatePaymentUseCase } from './application/payments/CreatePaymentUseCase.js';
 import { UpdatePaymentUseCase } from './application/payments/UpdatePaymentUseCase.js';
 import { MarkPaymentAsPaidUseCase } from './application/payments/MarkPaymentAsPaidUseCase.js';
 import { CancelPaymentUseCase } from './application/payments/CancelPaymentUseCase.js';
 import { GetPaymentsUseCase } from './application/payments/GetPaymentsUseCase.js';
-import { PaymentController } from './delivery/PaymentController.js';
-import { PostgresLockerRepository } from './infrastructure/PostgresLockerRepository.js';
-import { LockerValidator } from './domain/services/LockerValidator.js';
-import { CreateLockerUseCase } from './application/CreateLockerUseCase.js';
-import { GetLockersUseCase } from './application/GetLockersUseCase.js';
-import { UpdateLockerUseCase } from './application/UpdateLockerUseCase.js';
-import { DeleteLockerUseCase } from './application/DeleteLockerUseCase.js';
-import { LockerController } from './delivery/LockerController.js';
+import { PaymentController } from './delivery/payments/PaymentController.js';
+import { PostgresLockerRepository } from './infrastructure/lockers/PostgresLockerRepository.js';
+import { LockerValidator } from './domain/lockers/services/LockerValidator.js';
+import { CreateLockerUseCase } from './application/lockers/CreateLockerUseCase.js';
+import { GetLockersUseCase } from './application/lockers/GetLockersUseCase.js';
+import { UpdateLockerUseCase } from './application/lockers/UpdateLockerUseCase.js';
+import { DeleteLockerUseCase } from './application/lockers/DeleteLockerUseCase.js';
+import { LockerController } from './delivery/lockers/LockerController.js';
 
 export function buildApp() {
     const server = Fastify({

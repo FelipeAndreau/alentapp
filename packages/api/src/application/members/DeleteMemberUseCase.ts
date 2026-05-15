@@ -1,4 +1,4 @@
-import { MemberRepository } from '../domain/MemberRepository.js';
+import { MemberRepository } from '../domain/members/MemberRepository.js';
 
 export class DeleteMemberUseCase {
     constructor(private readonly memberRepo: MemberRepository) {}

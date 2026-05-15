@@ -1,6 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../generated/client/client.js';
-import { MemberRepository } from '../domain/MemberRepository.js';
+import { PrismaClient } from '../../generated/client/client.js';
+import { MemberRepository } from '../domain/members/MemberRepository.js';
 import { MemberDTO, CreateMemberRequest, UpdateMemberRequest } from '@alentapp/shared';
 
 if (!process.env.DATABASE_URL) {

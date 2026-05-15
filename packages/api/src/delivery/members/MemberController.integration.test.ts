@@ -5,7 +5,7 @@ import { CreateMemberRequest } from '@alentapp/shared';
 
 // Mockeamos el repositorio para que la API entera funcione sin conectarse a la Base de Datos real
 // Esto nos permite testear la integración del ciclo completo: Fastify -> Controller -> UseCase -> Validator
-vi.mock('../infrastructure/PostgresMemberRepository.js', () => {
+vi.mock('./infrastructure/members/PostgresMemberRepository.js', () => {
     return {
         PostgresMemberRepository: class {
             async findAll() { return [{ id: '1', name: 'Socio Existente' }]; }
