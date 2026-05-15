@@ -7,6 +7,14 @@ import { GetMembersUseCase } from './application/GetMembersUseCase.js';
 import { UpdateMemberUseCase } from './application/UpdateMemberUseCase.js';
 import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
 import { MemberController } from './delivery/MemberController.js';
+import { PostgresPaymentRepository } from './infrastructure/PostgresPaymentRepository.js';
+import { SystemClock } from './domain/services/Clock.js';
+import { CreatePaymentUseCase } from './application/payments/CreatePaymentUseCase.js';
+import { UpdatePaymentUseCase } from './application/payments/UpdatePaymentUseCase.js';
+import { MarkPaymentAsPaidUseCase } from './application/payments/MarkPaymentAsPaidUseCase.js';
+import { CancelPaymentUseCase } from './application/payments/CancelPaymentUseCase.js';
+import { GetPaymentsUseCase } from './application/payments/GetPaymentsUseCase.js';
+import { PaymentController } from './delivery/PaymentController.js';
 
 export function buildApp() {
     const server = Fastify({
@@ -23,7 +31,7 @@ export function buildApp() {
 
     server.register(cors, {
         origin: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
     });
@@ -47,6 +55,30 @@ export function buildApp() {
     server.post('/api/v1/socios', memberController.create.bind(memberController));
     server.put('/api/v1/socios/:id', memberController.update.bind(memberController));
     server.delete('/api/v1/socios/:id', memberController.delete.bind(memberController));
+
+    const paymentRepo = new PostgresPaymentRepository();
+    const systemClock = new SystemClock();
+
+    const createPaymentUseCase = new CreatePaymentUseCase(paymentRepo, memberRepo);
+    const updatePaymentUseCase = new UpdatePaymentUseCase(paymentRepo);
+    const markPaymentAsPaidUseCase = new MarkPaymentAsPaidUseCase(paymentRepo, systemClock);
+    const cancelPaymentUseCase = new CancelPaymentUseCase(paymentRepo);
+    const getPaymentsUseCase = new GetPaymentsUseCase(paymentRepo);
+
+    const paymentController = new PaymentController(
+        createPaymentUseCase,
+        updatePaymentUseCase,
+        markPaymentAsPaidUseCase,
+        cancelPaymentUseCase,
+        getPaymentsUseCase
+    );
+
+    server.get('/api/v1/payments', paymentController.getAll.bind(paymentController));
+    server.post('/api/v1/payments', paymentController.create.bind(paymentController));
+    server.patch('/api/v1/payments/:id', paymentController.update.bind(paymentController));
+    server.patch('/api/v1/payments/:id/pay', paymentController.pay.bind(paymentController));
+    server.patch('/api/v1/payments/:id/cancel', paymentController.cancel.bind(paymentController));
+    server.delete('/api/v1/payments/:id', paymentController.deleteBlocker.bind(paymentController));
 
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'asd' })

@@ -30,6 +30,13 @@ export function HomeView() {
           to="/members"
           icon={LuUsers}
         />
+        
+        <SectionCard 
+          title="Pagos"
+          description="Gestiona el cobro de cuotas, registra pagos y anula comprobantes."
+          to="/payments"
+          icon={LuUsers} 
+        />
 
         {/* Future sections can be added here following the same pattern */}
         <Box 
