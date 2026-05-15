@@ -1,27 +1,8 @@
-import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../generated/client/client.js';
-import { DisciplineRepository } from '../domain/DisciplineRepository.js';
+import { IDisciplineRepository } from '../domain/IDisciplineRepository.js';
 import { DisciplineDTO, CreateDisciplineRequest } from '@alentapp/shared';
+import { prisma } from './PrismaClient.js';
 
-if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL environment variable is not set');
-}
-
-const prisma = new PrismaClient({
-    adapter: new PrismaPg(process.env.DATABASE_URL),
-});
-
-type DBDiscipline = {
-    id: string;
-    reason: string;
-    start_date: Date;
-    end_date: Date;
-    is_total_suspension: boolean;
-    member_id: string;
-    deleted_at: Date | null;
-};
-
-export class PostgresDisciplineRepository implements DisciplineRepository {
+export class PostgresDisciplineRepository implements IDisciplineRepository {
     async create(data: CreateDisciplineRequest): Promise<DisciplineDTO> {
         const discipline = await prisma.discipline.create({
             data: {
@@ -32,11 +13,18 @@ export class PostgresDisciplineRepository implements DisciplineRepository {
                 member_id: data.member_id,
             },
         });
-
         return this.mapToDTO(discipline);
     }
 
-    private mapToDTO(discipline: DBDiscipline): DisciplineDTO {
+    async getAll(): Promise<DisciplineDTO[]> {
+        const disciplines = await prisma.discipline.findMany({
+            where: { deleted_at: null },
+            orderBy: { start_date: 'desc' },
+        });
+        return disciplines.map(d => this.mapToDTO(d));
+    }
+
+    private mapToDTO(discipline: any): DisciplineDTO {
         return {
             id: discipline.id,
             reason: discipline.reason,

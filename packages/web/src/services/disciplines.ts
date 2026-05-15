@@ -5,7 +5,6 @@ const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/ap
 export const disciplinesService = {
   async getAll(): Promise<DisciplineDTO[]> {
     const response = await fetch(`${API_URL}/disciplines`);
-    if (response.status === 404) return [];
     if (!response.ok) {
       throw new Error('Error al obtener las disciplinas');
     }
