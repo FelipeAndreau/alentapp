@@ -7,6 +7,14 @@ import { GetMembersUseCase } from './application/GetMembersUseCase.js';
 import { UpdateMemberUseCase } from './application/UpdateMemberUseCase.js';
 import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
 import { MemberController } from './delivery/MemberController.js';
+
+// Imports - Disciplines
+import { PostgresDisciplineRepository } from './infrastructure/PostgresDisciplineRepository.js';
+import { DisciplineValidator } from './domain/services/DisciplineValidator.js';
+import { CreateDisciplineUseCase } from './application/CreateDisciplineUseCase.js';
+import { DisciplineController } from './delivery/DisciplineController.js';
+
+// Imports - Payments
 import { PostgresPaymentRepository } from './infrastructure/PostgresPaymentRepository.js';
 import { SystemClock } from './domain/services/Clock.js';
 import { CreatePaymentUseCase } from './application/payments/CreatePaymentUseCase.js';
@@ -56,6 +64,15 @@ export function buildApp() {
     server.put('/api/v1/socios/:id', memberController.update.bind(memberController));
     server.delete('/api/v1/socios/:id', memberController.delete.bind(memberController));
 
+    // --- Disciplines ---
+    const disciplineRepo = new PostgresDisciplineRepository();
+    const disciplineValidator = new DisciplineValidator();
+    const createDisciplineUseCase = new CreateDisciplineUseCase(disciplineRepo, memberRepo, disciplineValidator);
+    const disciplineController = new DisciplineController(createDisciplineUseCase);
+
+    server.post('/api/v1/disciplines', disciplineController.create.bind(disciplineController));
+
+    // --- Payments ---
     const paymentRepo = new PostgresPaymentRepository();
     const systemClock = new SystemClock();
 
