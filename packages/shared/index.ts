@@ -117,3 +117,37 @@ export interface UpdateDisciplineRequest {
     end_date?: string;
     is_total_suspension?: boolean;
 }
+
+// ==========================================
+// Sport (Deportes)
+// ==========================================
+export interface SportDTO {
+    id: string;
+    name: string;
+    description?: string | null;
+    max_capacity: number;
+    additional_price: number;
+    requires_medical_certificate: boolean;
+    deleted_at: string | null;
+}
+
+export interface CreateSportRequest {
+    name: string;
+    description?: string;
+    max_capacity: number;
+    additional_price: number;
+    requires_medical_certificate: boolean;
+}
+
+export interface UpdateSportRequest {
+    description?: string;
+    max_capacity?: number;
+}
+
+export interface SportResponse {
+    data: SportDTO;
+}
+
+export interface SportsResponse {
+    data: SportDTO[];
+}

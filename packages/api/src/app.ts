@@ -6,10 +6,12 @@ import { PostgresMemberRepository } from './infrastructure/PostgresMemberReposit
 import { PostgresPaymentRepository } from './infrastructure/PostgresPaymentRepository.js';
 import { PostgresLockerRepository } from './infrastructure/PostgresLockerRepository.js';
 import { PostgresDisciplineRepository } from './infrastructure/PostgresDisciplineRepository.js';
+import { PostgresSportRepository } from './infrastructure/PostgresSportRepository.js';
 
 // DOMINIO (VALIDADORES Y SERVICIOS)
 import { MemberValidator } from './domain/services/MemberValidator.js';
 import { LockerValidator } from './domain/services/LockerValidator.js';
+import { SportValidator } from './domain/services/SportValidator.js';
 import { SystemClock } from './domain/services/Clock.js';
 
 // ERRORES DE DOMINIO PARA EL HANDLER GLOBAL
@@ -36,22 +38,32 @@ import { CreateDisciplineUseCase } from './application/disciplines/CreateDiscipl
 import { GetDisciplinesUseCase } from './application/disciplines/GetDisciplinesUseCase.js';
 import { UpdateDisciplineUseCase } from './application/disciplines/UpdateDisciplineUseCase.js';
 
+import { CreateSportUseCase } from './application/sports/CreateSportUseCase.js';
+import { GetSportsUseCase } from './application/sports/GetSportsUseCase.js';
+import { UpdateSportUseCase } from './application/sports/UpdateSportUseCase.js';
+import { DeleteSportUseCase } from './application/sports/DeleteSportUseCase.js';
+
 // DELIVERY (CONTROLADORES)
 import { MemberController } from './delivery/MemberController.js';
 import { PaymentController } from './delivery/PaymentController.js';
 import { LockerController } from './delivery/LockerController.js';
 import { DisciplineController } from './delivery/DisciplineController.js';
+import { SportController } from './delivery/SportController.js';
 
 export function buildApp() {
     const server = Fastify({
         logger: {
             level: 'info',
-            transport: process.env.NODE_ENV === 'development' 
-            ? {
-                target: 'pino-pretty',
-                options: { translateTime: 'HH:MM:ss Z', ignore: 'pid,hostname' },
-                } 
-            : undefined,
+            transport:
+                process.env.NODE_ENV === 'development'
+                    ? {
+                          target: 'pino-pretty',
+                          options: {
+                              translateTime: 'HH:MM:ss Z',
+                              ignore: 'pid,hostname',
+                          },
+                      }
+                    : undefined,
         },
     });
 
@@ -82,6 +94,7 @@ export function buildApp() {
     const paymentRepo = new PostgresPaymentRepository();
     const lockerRepo = new PostgresLockerRepository();
     const disciplineRepo = new PostgresDisciplineRepository();
+    const sportRepo = new PostgresSportRepository();
     const systemClock = new SystemClock();
 
     // 2. INICIALIZACIÓN DE SOCIOS
@@ -91,7 +104,7 @@ export function buildApp() {
     const updateMemberUseCase = new UpdateMemberUseCase(memberRepo, memberValidator);
     const deleteMemberUseCase = new DeleteMemberUseCase(memberRepo);
     const memberController = new MemberController(
-        createMemberUseCase, 
+        createMemberUseCase,
         getMembersUseCase,
         updateMemberUseCase,
         deleteMemberUseCase
@@ -130,6 +143,19 @@ export function buildApp() {
     const updateDisciplineUseCase = new UpdateDisciplineUseCase(disciplineRepo);
     const disciplineController = new DisciplineController(createDisciplineUseCase, getDisciplinesUseCase, updateDisciplineUseCase);
 
+    // 6. INICIALIZACIÓN DE DEPORTES
+    const sportValidator = new SportValidator(sportRepo);
+    const createSportUseCase = new CreateSportUseCase(sportRepo, sportValidator);
+    const getSportsUseCase = new GetSportsUseCase(sportRepo);
+    const updateSportUseCase = new UpdateSportUseCase(sportRepo, sportValidator);
+    const deleteSportUseCase = new DeleteSportUseCase(sportRepo);
+    const sportController = new SportController(
+        createSportUseCase,
+        getSportsUseCase,
+        updateSportUseCase,
+        deleteSportUseCase
+    );
+
     // --- REGISTRO DE RUTAS ---
 
     // Rutas de Socios
@@ -157,8 +183,14 @@ export function buildApp() {
     server.post('/api/v1/disciplines', disciplineController.create.bind(disciplineController));
     server.patch('/api/v1/disciplines/:id', disciplineController.update.bind(disciplineController));
 
+    // Rutas de Deportes
+    server.get('/api/v1/sports', sportController.getAll.bind(sportController));
+    server.post('/api/v1/sports', sportController.create.bind(sportController));
+    server.patch('/api/v1/sports/:id', sportController.update.bind(sportController));
+    server.delete('/api/v1/sports/:id', sportController.delete.bind(sportController));
+
     server.get('/', async (req, rep) => {
-        rep.status(200).send({ msg: 'Alentapp API OK' })
+        rep.status(200).send({ msg: 'Alentapp API OK' });
     });
 
     return server;
@@ -169,7 +201,7 @@ if (process.argv[1] && process.argv[1].endsWith('app.ts')) {
     const port = parseInt(process.env.PORT || '3000', 10);
 
     server.listen({ port, host: '0.0.0.0' }, () =>
-        server.log.info(`API server running on http://localhost:${port}`)
+        server.log.info(`API server running on http://localhost:${port}`),
     );
 
     ['SIGINT', 'SIGTERM'].forEach((signal) => {
