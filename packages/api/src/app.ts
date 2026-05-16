@@ -2,27 +2,26 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 
 // INFRAESTRUCTURA (REPOS)
-import { PostgresMemberRepository } from './infrastructure/members/PostgresMemberRepository.js';
-import { PostgresPaymentRepository } from './infrastructure/payments/PostgresPaymentRepository.js';
-import { PostgresLockerRepository } from './infrastructure/lockers/PostgresLockerRepository.js';
-import { PostgresDisciplineRepository } from './infrastructure/disciplines/PostgresDisciplineRepository.js';
-import { PostgresSportRepository } from './infrastructure/PostgresSportRepository.js'; // Acomodar ruta luego si es necesario
+import { PostgresMemberRepository } from './infrastructure/PostgresMemberRepository.js';
+import { PostgresPaymentRepository } from './infrastructure/PostgresPaymentRepository.js';
+import { PostgresLockerRepository } from './infrastructure/PostgresLockerRepository.js';
+import { PostgresDisciplineRepository } from './infrastructure/PostgresDisciplineRepository.js';
+import { PostgresSportRepository } from './infrastructure/PostgresSportRepository.js';
 
 // DOMINIO (VALIDADORES Y SERVICIOS)
-import { MemberValidator } from './domain/members/services/MemberValidator.js';
-import { DisciplineValidator } from './domain/disciplines/services/DisciplineValidator.js';
-import { LockerValidator } from './domain/lockers/services/LockerValidator.js';
-import { SportValidator } from './domain/services/SportValidator.js'; // Acomodar ruta luego si es necesario
+import { MemberValidator } from './domain/services/MemberValidator.js';
+import { LockerValidator } from './domain/services/LockerValidator.js';
+import { SportValidator } from './domain/services/SportValidator.js';
 import { SystemClock } from './domain/services/Clock.js';
 
 // ERRORES DE DOMINIO PARA EL HANDLER GLOBAL
-import { NotFoundError, ValidationError, ConflictError } from './domain/payments/errors/PaymentErrors.js';
+import { NotFoundError, ValidationError, ConflictError } from './domain/errors/PaymentErrors.js';
 
 // APLICACIÓN (USE CASES)
-import { CreateMemberUseCase } from './application/members/NewMemberUseCase.js';
-import { GetMembersUseCase } from './application/members/GetMembersUseCase.js';
-import { UpdateMemberUseCase } from './application/members/UpdateMemberUseCase.js';
-import { DeleteMemberUseCase } from './application/members/DeleteMemberUseCase.js';
+import { CreateMemberUseCase } from './application/NewMemberUseCase.js';
+import { GetMembersUseCase } from './application/GetMembersUseCase.js';
+import { UpdateMemberUseCase } from './application/UpdateMemberUseCase.js';
+import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
 
 import { CreatePaymentUseCase } from './application/payments/CreatePaymentUseCase.js';
 import { UpdatePaymentUseCase } from './application/payments/UpdatePaymentUseCase.js';
@@ -30,13 +29,14 @@ import { MarkPaymentAsPaidUseCase } from './application/payments/MarkPaymentAsPa
 import { CancelPaymentUseCase } from './application/payments/CancelPaymentUseCase.js';
 import { GetPaymentsUseCase } from './application/payments/GetPaymentsUseCase.js';
 
-import { CreateLockerUseCase } from './application/lockers/CreateLockerUseCase.js';
-import { GetLockersUseCase } from './application/lockers/GetLockersUseCase.js';
-import { UpdateLockerUseCase } from './application/lockers/UpdateLockerUseCase.js';
-import { DeleteLockerUseCase } from './application/lockers/DeleteLockerUseCase.js';
+import { CreateLockerUseCase } from './application/CreateLockerUseCase.js';
+import { GetLockersUseCase } from './application/GetLockersUseCase.js';
+import { UpdateLockerUseCase } from './application/UpdateLockerUseCase.js';
+import { DeleteLockerUseCase } from './application/DeleteLockerUseCase.js';
 
 import { CreateDisciplineUseCase } from './application/disciplines/CreateDisciplineUseCase.js';
 import { GetDisciplinesUseCase } from './application/disciplines/GetDisciplinesUseCase.js';
+import { UpdateDisciplineUseCase } from './application/disciplines/UpdateDisciplineUseCase.js';
 
 import { CreateSportUseCase } from './application/sports/CreateSportUseCase.js';
 import { GetSportsUseCase } from './application/sports/GetSportsUseCase.js';
@@ -44,11 +44,11 @@ import { UpdateSportUseCase } from './application/sports/UpdateSportUseCase.js';
 import { DeleteSportUseCase } from './application/sports/DeleteSportUseCase.js';
 
 // DELIVERY (CONTROLADORES)
-import { MemberController } from './delivery/members/MemberController.js';
-import { PaymentController } from './delivery/payments/PaymentController.js';
-import { LockerController } from './delivery/lockers/LockerController.js';
-import { DisciplineController } from './delivery/disciplines/DisciplineController.js';
-import { SportController } from './delivery/SportController.js'; // Acomodar ruta luego si es necesario
+import { MemberController } from './delivery/MemberController.js';
+import { PaymentController } from './delivery/PaymentController.js';
+import { LockerController } from './delivery/LockerController.js';
+import { DisciplineController } from './delivery/DisciplineController.js';
+import { SportController } from './delivery/SportController.js';
 
 export function buildApp() {
     const server = Fastify({
@@ -138,10 +138,10 @@ export function buildApp() {
     );
 
     // 5. INICIALIZACIÓN DE DISCIPLINAS
-    const disciplineValidator = new DisciplineValidator();
-    const createDisciplineUseCase = new CreateDisciplineUseCase(disciplineRepo, memberRepo, disciplineValidator);
+    const createDisciplineUseCase = new CreateDisciplineUseCase(disciplineRepo, memberRepo);
     const getDisciplinesUseCase = new GetDisciplinesUseCase(disciplineRepo);
-    const disciplineController = new DisciplineController(createDisciplineUseCase, getDisciplinesUseCase);
+    const updateDisciplineUseCase = new UpdateDisciplineUseCase(disciplineRepo);
+    const disciplineController = new DisciplineController(createDisciplineUseCase, getDisciplinesUseCase, updateDisciplineUseCase);
 
     // 6. INICIALIZACIÓN DE DEPORTES
     const sportValidator = new SportValidator(sportRepo);
@@ -181,6 +181,7 @@ export function buildApp() {
     // Rutas de Disciplinas
     server.get('/api/v1/disciplines', disciplineController.getAll.bind(disciplineController));
     server.post('/api/v1/disciplines', disciplineController.create.bind(disciplineController));
+    server.patch('/api/v1/disciplines/:id', disciplineController.update.bind(disciplineController));
 
     // Rutas de Deportes
     server.get('/api/v1/sports', sportController.getAll.bind(sportController));
