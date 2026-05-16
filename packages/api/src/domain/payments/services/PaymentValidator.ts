@@ -18,7 +18,7 @@ export class PaymentValidator {
     const currentMonth = now.getMonth() + 1;
 
     if (!Number.isInteger(year) || year < currentYear) {
-      throw new PaymentValidationError('El ano no puede ser en el pasado');
+      throw new PaymentValidationError('El año no puede ser en el pasado');
     }
 
     if (year === currentYear && month < currentMonth) {
@@ -42,7 +42,7 @@ export class PaymentValidator {
     const dueDateYear = dueDate.getUTCFullYear();
 
     if (dueDateYear < year || (dueDateYear === year && dueDateMonth < month)) {
-      throw new PaymentValidationError('La fecha de vencimiento no puede ser anterior al mes/ano del pago');
+      throw new PaymentValidationError('La fecha de vencimiento no puede ser anterior al mes/año del pago');
     }
   }
 }

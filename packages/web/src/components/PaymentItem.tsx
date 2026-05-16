@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Box, Text, Badge, Button, Flex } from '@chakra-ui/react';
+import { LuPencil } from "react-icons/lu";
 import { toaster } from './ui/toaster';
 import type { PaymentDTO } from '@alentapp/shared';
 import { paymentsService } from '../services/payments';
@@ -7,9 +8,10 @@ import { paymentsService } from '../services/payments';
 interface PaymentItemProps {
   payment: PaymentDTO;
   onUpdate: (updatedPayment: PaymentDTO) => void;
+  onEdit: (payment: PaymentDTO) => void;
 }
 
-export function PaymentItem({ payment, onUpdate }: PaymentItemProps) {
+export function PaymentItem({ payment, onUpdate, onEdit }: PaymentItemProps) {
   const [loadingPay, setLoadingPay] = useState(false);
   const [loadingCancel, setLoadingCancel] = useState(false);
 
@@ -63,6 +65,7 @@ export function PaymentItem({ payment, onUpdate }: PaymentItemProps) {
         <Box>
           <Text fontWeight="bold" fontSize="lg">Cuota {payment.month}/{payment.year}</Text>
           <Text color="gray.500">Monto: ${payment.amount}</Text>
+          <Text fontSize="sm" color="gray.400">Vencimiento: {new Date(payment.due_date).toLocaleDateString()}</Text>
           {payment.payment_date && <Text fontSize="sm">Fecha de cobro: {new Date(payment.payment_date).toLocaleDateString()}</Text>}
         </Box>
 
@@ -70,6 +73,17 @@ export function PaymentItem({ payment, onUpdate }: PaymentItemProps) {
           <Badge colorPalette={colorPalette} fontSize="md" p={1} borderRadius="md">
             {payment.status}
           </Badge>
+
+          {payment.status === 'Pending' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onEdit(payment)}
+              disabled={loadingPay || loadingCancel}
+            >
+              <LuPencil /> Editar
+            </Button>
+          )}
 
           <Button
             colorPalette="green"
