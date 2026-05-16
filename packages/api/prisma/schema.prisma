@@ -47,6 +47,7 @@ model Member {
     payments    Payment[]
     lockers     Locker[]
     disciplines Discipline[]
+    enrollments Enrollment[]
 
     @@map("members")
 }
@@ -89,4 +90,30 @@ model Payment {
     updated_at   DateTime      @updatedAt
 
     @@map("payments")
+}
+
+model Sport {
+    id                           String       @id @default(uuid())
+    name                         String       @unique
+    description                  String?
+    max_capacity                 Int
+    additional_price             Float        @default(0.0)
+    requires_medical_certificate Boolean      @default(false)
+    createdAt                    DateTime     @default(now())
+    updatedAt                    DateTime     @updatedAt
+    deleted_at                   DateTime?
+    enrollments                  Enrollment[]
+
+    @@map("sports")
+}
+
+model Enrollment {
+    id         String   @id @default(uuid())
+    member_id  String
+    sport_id   String
+    member     Member   @relation(fields: [member_id], references: [id])
+    sport      Sport    @relation(fields: [sport_id], references: [id])
+    created_at DateTime @default(now())
+
+    @@map("enrollments")
 }
