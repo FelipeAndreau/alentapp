@@ -1,6 +1,6 @@
 ---
 id: 0007
-estado: Propuesto
+estado: Implementado
 autor: Pedro
 fecha: 2026-04-30
 titulo: Crear Disciplina
