@@ -35,7 +35,36 @@ export class PostgresDisciplineRepository implements DisciplineRepository {
         return disciplines.map(d => this.mapToDTO(d));
     }
 
+<<<<<<< HEAD:packages/api/src/infrastructure/disciplines/PostgresDisciplineRepository.ts
     private mapToDTO(discipline: DBDiscipline): DisciplineDTO {
+=======
+    async findById(id: string): Promise<DisciplineDTO | null> {
+        const discipline = await prisma.discipline.findFirst({
+            where: { id, deleted_at: null },
+        });
+        if (!discipline) return null;
+        return this.mapToDTO(discipline);
+    }
+
+    async update(data: DisciplineDTO): Promise<DisciplineDTO> {
+        const discipline = await prisma.discipline.update({
+            where: { id: data.id },
+            data: {
+                reason: data.reason,
+                start_date: new Date(data.start_date),
+                end_date: new Date(data.end_date),
+                is_total_suspension: data.is_total_suspension,
+            },
+        });
+        return this.mapToDTO(discipline);
+    }
+
+    async delete(id: string): Promise<void> {
+        await prisma.discipline.update({ where: { id }, data: { deleted_at: new Date() } });
+    }
+
+    private mapToDTO(discipline: any): DisciplineDTO {
+>>>>>>> origin/feature/discipline-delete:packages/api/src/infrastructure/PostgresDisciplineRepository.ts
         return {
             id: discipline.id,
             reason: discipline.reason,

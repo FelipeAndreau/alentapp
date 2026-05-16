@@ -1,3 +1,4 @@
+import React from 'react';
 import {
     Table,
     Button,
@@ -15,7 +16,8 @@ import {
 import { LuPlus, LuPencil, LuTrash2, LuRefreshCw } from "react-icons/lu";
 import { useEffect, useState } from "react";
 import { lockersService } from "../services/lockers";
-import type { LockerDTO, CreateLockerRequest, UpdateLockerRequest, LockerStatus } from "@alentapp/shared";
+import { membersService } from "../services/members";
+import type { LockerDTO, CreateLockerRequest, UpdateLockerRequest, LockerStatus, MemberDTO } from "@alentapp/shared";
 import {
     DialogRoot,
     DialogContent,
@@ -38,14 +40,21 @@ import {
 
 const statusOptions = createListCollection({
     items: [
-        { label: "Available", value: "Available" },
-        { label: "Occupied", value: "Occupied" },
-        { label: "Maintenance", value: "Maintenance" },
+        { label: "Disponible", value: "Available" },
+        { label: "Ocupado", value: "Occupied" },
+        { label: "En Mantenimiento", value: "Maintenance" },
     ],
 });
 
+const statusLabels: Record<string, string> = {
+    Available: "Disponible",
+    Occupied: "Ocupado",
+    Maintenance: "En Mantenimiento",
+};
+
 export function LockersView() {
     const [lockers, setLockers] = useState<LockerDTO[]>([]);
+    const [members, setMembers] = useState<MemberDTO[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -53,20 +62,32 @@ export function LockersView() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingLockerId, setEditingLockerId] = useState<string | null>(null);
 
-    const [formData, setFormData] = useState<CreateLockerRequest & { status?: LockerStatus }>({
+    const [formData, setFormData] = useState<CreateLockerRequest & { status?: LockerStatus; member_id?: string | null }>({
         number: 0,
         location: "",
         status: "Available",
+        member_id: null,
     });
 
-    const fetchLockers = async () => {
+    const membersCollection = createListCollection({
+        items: [
+            { label: "Sin asignar", value: "" },
+            ...members.map(m => ({ label: `${m.name} (${m.dni})`, value: m.id }))
+        ]
+    });
+
+    const fetchData = async () => {
         setIsLoading(true);
         setError(null);
         try {
-            const data = await lockersService.getAll();
-            setLockers(data);
+            const [lockersData, membersData] = await Promise.all([
+                lockersService.getAll(),
+                membersService.getAll(),
+            ]);
+            setLockers(lockersData);
+            setMembers(membersData);
         } catch (err: any) {
-            setError(err.message || "Error al cargar los casilleros");
+            setError(err.message || "Error al cargar los datos");
         } finally {
             setIsLoading(false);
         }
@@ -74,7 +95,7 @@ export function LockersView() {
 
     const openCreateModal = () => {
         setEditingLockerId(null);
-        setFormData({ number: 0, location: "", status: "Available" });
+        setFormData({ number: 0, location: "", status: "Available", member_id: null });
         setIsDialogOpen(true);
     };
 
@@ -84,6 +105,7 @@ export function LockersView() {
             number: locker.number,
             location: locker.location,
             status: locker.status,
+            member_id: locker.member_id,
         });
         setIsDialogOpen(true);
     };
@@ -93,12 +115,20 @@ export function LockersView() {
         setIsSubmitting(true);
         try {
             if (editingLockerId) {
-                await lockersService.update(editingLockerId, formData as UpdateLockerRequest);
+                await lockersService.update(editingLockerId, {
+                    location: formData.location,
+                    status: formData.status,
+                    member_id: formData.member_id || null,
+                } as UpdateLockerRequest);
             } else {
-                await lockersService.create(formData as CreateLockerRequest);
+                await lockersService.create({
+                    number: formData.number,
+                    location: formData.location,
+                    status: formData.status,
+                } as CreateLockerRequest);
             }
             setIsDialogOpen(false);
-            fetchLockers();
+            fetchData();
         } catch (err: any) {
             alert(err.message || "Error al guardar el casillero");
         } finally {
@@ -110,7 +140,7 @@ export function LockersView() {
         if (window.confirm(`¿Estás seguro de que deseas eliminar el casillero #${number}? Esta acción no se puede deshacer.`)) {
             try {
                 await lockersService.delete(id);
-                fetchLockers();
+                fetchData();
             } catch (err: any) {
                 alert(err.message || "Error al eliminar el casillero");
             }
@@ -118,13 +148,19 @@ export function LockersView() {
     };
 
     useEffect(() => {
-        fetchLockers();
+        fetchData();
     }, []);
 
     const getStatusColor = (status: string) => {
         if (status === 'Available') return { bg: 'green.50', color: 'green.700' };
         if (status === 'Occupied') return { bg: 'blue.50', color: 'blue.700' };
         return { bg: 'orange.50', color: 'orange.700' };
+    };
+
+    const getMemberName = (member_id: string | null) => {
+        if (!member_id) return "—";
+        const member = members.find(m => m.id === member_id);
+        return member ? `${member.name} (${member.dni})` : member_id;
     };
 
     return (
@@ -138,7 +174,7 @@ export function LockersView() {
                         </Text>
                     </Stack>
                     <HStack gap="3">
-                        <Button variant="outline" onClick={fetchLockers} disabled={isLoading}>
+                        <Button variant="outline" onClick={fetchData} disabled={isLoading}>
                             <LuRefreshCw /> Actualizar
                         </Button>
                         <Button colorPalette="blue" size="md" onClick={openCreateModal}>
@@ -191,6 +227,26 @@ export function LockersView() {
                                         </SelectContent>
                                     </SelectRoot>
                                 </Field>
+                                {editingLockerId && (
+                                    <Field label="Socio Asignado">
+                                        <SelectRoot
+                                            collection={membersCollection}
+                                            value={[formData.member_id ?? ""]}
+                                            onValueChange={(e) => setFormData({ ...formData, member_id: e.value[0] || null })}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValueText placeholder="Sin asignar" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {membersCollection.items.map((m) => (
+                                                    <SelectItem item={m} key={m.value}>
+                                                        {m.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </SelectRoot>
+                                    </Field>
+                                )}
                             </Stack>
                         </DialogBody>
                         <DialogFooter>
@@ -232,7 +288,7 @@ export function LockersView() {
                         <Center h="300px">
                             <Stack align="center" gap="4">
                                 <Text color="fg.muted">No se encontraron casilleros.</Text>
-                                <Button variant="ghost" onClick={fetchLockers}>Reintentar</Button>
+                                <Button variant="ghost" onClick={fetchData}>Reintentar</Button>
                             </Stack>
                         </Center>
                     ) : (
@@ -266,11 +322,11 @@ export function LockersView() {
                                                     fontSize="xs"
                                                     fontWeight="bold"
                                                 >
-                                                    {locker.status}
+                                                    {statusLabels[locker.status]}
                                                 </Box>
                                             </Table.Cell>
                                             <Table.Cell color="fg.muted">
-                                                {locker.member_id ?? "—"}
+                                                {getMemberName(locker.member_id)}
                                             </Table.Cell>
                                             <Table.Cell textAlign="end">
                                                 <HStack gap="2" justify="flex-end">

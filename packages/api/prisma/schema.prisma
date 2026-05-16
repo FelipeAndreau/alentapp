@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
     provider = "prisma-client-js"
     output   = "../src/generated/client"
@@ -30,6 +28,12 @@ enum LockerStatus {
     Maintenance
 }
 
+enum PaymentStatus {
+    Pending
+    Paid
+    Canceled
+}
+
 model Member {
     id          String         @id @default(uuid())
     dni         String         @unique
@@ -42,14 +46,9 @@ model Member {
     payments    Payment[]
     lockers     Locker[]
     disciplines Discipline[]
+    enrollments Enrollment[]
 
     @@map("members")
-}
-
-enum PaymentStatus {
-    Pending
-    Paid
-    Canceled
 }
 
 model Payment {
@@ -90,4 +89,30 @@ model Discipline {
     member              Member    @relation(fields: [member_id], references: [id])
 
     @@map("disciplines")
+}
+
+model Sport {
+    id                           String       @id @default(uuid())
+    name                         String       @unique
+    description                  String?
+    max_capacity                 Int
+    additional_price             Float        @default(0.0)
+    requires_medical_certificate Boolean      @default(false)
+    createdAt                    DateTime     @default(now())
+    updatedAt                    DateTime     @updatedAt
+    deleted_at                   DateTime?
+    enrollments                  Enrollment[]
+
+    @@map("sports")
+}
+
+model Enrollment {
+    id         String   @id @default(uuid())
+    member_id  String
+    sport_id   String
+    member     Member   @relation(fields: [member_id], references: [id])
+    sport      Sport    @relation(fields: [sport_id], references: [id])
+    created_at DateTime @default(now())
+
+    @@map("enrollments")
 }
