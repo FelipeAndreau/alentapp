@@ -5,4 +5,5 @@ export interface IDisciplineRepository {
     getAll(): Promise<DisciplineDTO[]>;
     findById(id: string): Promise<DisciplineDTO | null>;
     update(data: DisciplineDTO): Promise<DisciplineDTO>;
+    delete(id: string): Promise<void>;
 }
