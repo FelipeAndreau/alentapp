@@ -28,6 +28,14 @@ export const disciplinesService = {
     return result.data;
   },
 
+  async delete(id: string): Promise<void> {
+    const response = await fetch(`${API_URL}/disciplines/${id}`, { method: 'DELETE' });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al eliminar la disciplina');
+    }
+  },
+
   async update(id: string, data: UpdateDisciplineRequest): Promise<DisciplineDTO> {
     const response = await fetch(`${API_URL}/disciplines/${id}`, {
       method: 'PATCH',
