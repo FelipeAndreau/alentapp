@@ -37,6 +37,7 @@ import { DeleteLockerUseCase } from './application/DeleteLockerUseCase.js';
 import { CreateDisciplineUseCase } from './application/disciplines/CreateDisciplineUseCase.js';
 import { GetDisciplinesUseCase } from './application/disciplines/GetDisciplinesUseCase.js';
 import { UpdateDisciplineUseCase } from './application/disciplines/UpdateDisciplineUseCase.js';
+import { DeleteDisciplineUseCase } from './application/disciplines/DeleteDisciplineUseCase.js';
 
 import { CreateSportUseCase } from './application/sports/CreateSportUseCase.js';
 import { GetSportsUseCase } from './application/sports/GetSportsUseCase.js';
@@ -141,7 +142,8 @@ export function buildApp() {
     const createDisciplineUseCase = new CreateDisciplineUseCase(disciplineRepo, memberRepo);
     const getDisciplinesUseCase = new GetDisciplinesUseCase(disciplineRepo);
     const updateDisciplineUseCase = new UpdateDisciplineUseCase(disciplineRepo);
-    const disciplineController = new DisciplineController(createDisciplineUseCase, getDisciplinesUseCase, updateDisciplineUseCase);
+    const deleteDisciplineUseCase = new DeleteDisciplineUseCase(disciplineRepo);
+    const disciplineController = new DisciplineController(createDisciplineUseCase, getDisciplinesUseCase, updateDisciplineUseCase, deleteDisciplineUseCase);
 
     // 6. INICIALIZACIÓN DE DEPORTES
     const sportValidator = new SportValidator(sportRepo);
@@ -182,6 +184,7 @@ export function buildApp() {
     server.get('/api/v1/disciplines', disciplineController.getAll.bind(disciplineController));
     server.post('/api/v1/disciplines', disciplineController.create.bind(disciplineController));
     server.patch('/api/v1/disciplines/:id', disciplineController.update.bind(disciplineController));
+    server.delete('/api/v1/disciplines/:id', disciplineController.delete.bind(disciplineController));
 
     // Rutas de Deportes
     server.get('/api/v1/sports', sportController.getAll.bind(sportController));
