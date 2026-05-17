@@ -7,5 +7,4 @@ export interface DisciplineRepository {
     findById(id: string): Promise<DisciplineDTO | null>;
     update(data: DisciplineDTO): Promise<DisciplineDTO>;
     delete(id: string): Promise<void>;
- origin/feature/discipline-delete:packages/api/src/domain/IDisciplineRepository.ts
 }
