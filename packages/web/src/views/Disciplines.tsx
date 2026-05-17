@@ -12,7 +12,7 @@ import {
   Input,
   Badge,
 } from '@chakra-ui/react';
-import { LuPlus, LuRefreshCw, LuPencil } from 'react-icons/lu';
+import { LuPlus, LuRefreshCw, LuPencil, LuTrash2 } from 'react-icons/lu';
 import { useEffect, useState, useMemo } from 'react';
 import { disciplinesService } from '../services/disciplines';
 import { membersService } from '../services/members';
@@ -61,6 +61,10 @@ export function DisciplinesView() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [formData, setFormData] = useState<CreateDisciplineRequest>({
     reason: '',
@@ -164,12 +168,53 @@ export function DisciplinesView() {
     }
   };
 
+  const openDeleteModal = (id: string) => {
+    setDeletingId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    setIsDeleting(true);
+    try {
+      await disciplinesService.delete(deletingId);
+      toaster.create({ title: 'Disciplina eliminada con éxito', type: 'success' });
+      setIsDeleteDialogOpen(false);
+      fetchData();
+    } catch (err: any) {
+      toaster.create({ title: 'No se pudo eliminar la disciplina', description: err.message, type: 'error' });
+    } finally {
+      setIsDeleting(false);
+      setDeletingId(null);
+    }
+  };
+
   const getMemberName = (member_id: string) => {
     const member = members.find((m) => m.id === member_id);
     return member ? `${member.name} (${member.dni})` : member_id;
   };
 
   return (
+    <>
+    <DialogRoot open={isDeleteDialogOpen} onOpenChange={(e) => setIsDeleteDialogOpen(e.open)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Eliminar disciplina</DialogTitle>
+        </DialogHeader>
+        <DialogBody>
+          <Text>¿Estás seguro de que querés eliminar esta disciplina? Esta acción no se puede deshacer.</Text>
+        </DialogBody>
+        <DialogFooter>
+          <DialogActionTrigger asChild>
+            <Button variant="outline">Cancelar</Button>
+          </DialogActionTrigger>
+          <Button colorPalette="red" loading={isDeleting} onClick={handleDelete}>
+            Eliminar
+          </Button>
+        </DialogFooter>
+        <DialogCloseTrigger />
+      </DialogContent>
+    </DialogRoot>
     <DialogRoot open={isDialogOpen} onOpenChange={(e) => setIsDialogOpen(e.open)}>
       <Stack gap="8">
         <Flex justify="space-between" align="center">
@@ -250,9 +295,14 @@ export function DisciplinesView() {
                       </Badge>
                     </Table.Cell>
                     <Table.Cell>
-                      <Button size="sm" variant="ghost" onClick={() => openEditModal(d)}>
-                        <LuPencil />
-                      </Button>
+                      <HStack gap="1">
+                        <Button size="sm" variant="ghost" onClick={() => openEditModal(d)}>
+                          <LuPencil />
+                        </Button>
+                        <Button size="sm" variant="ghost" colorPalette="red" onClick={() => openDeleteModal(d.id)}>
+                          <LuTrash2 />
+                        </Button>
+                      </HStack>
                     </Table.Cell>
                   </Table.Row>
                 ))}
@@ -368,5 +418,6 @@ export function DisciplinesView() {
         </DialogContent>
       </Stack>
     </DialogRoot>
+    </>
   );
 }

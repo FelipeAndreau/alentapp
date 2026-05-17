@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { CreateDisciplineUseCase } from '../application/disciplines/CreateDisciplineUseCase.js';
 import { GetDisciplinesUseCase } from '../application/disciplines/GetDisciplinesUseCase.js';
 import { UpdateDisciplineUseCase } from '../application/disciplines/UpdateDisciplineUseCase.js';
+import { DeleteDisciplineUseCase } from '../application/disciplines/DeleteDisciplineUseCase.js';
 import { CreateDisciplineRequest, UpdateDisciplineRequest } from '@alentapp/shared';
 
 export class DisciplineController {
@@ -9,6 +10,7 @@ export class DisciplineController {
         private readonly createDisciplineUseCase: CreateDisciplineUseCase,
         private readonly getDisciplinesUseCase: GetDisciplinesUseCase,
         private readonly updateDisciplineUseCase: UpdateDisciplineUseCase,
+        private readonly deleteDisciplineUseCase: DeleteDisciplineUseCase,
     ) {}
 
     async getAll(_request: FastifyRequest, reply: FastifyReply) {
@@ -24,5 +26,10 @@ export class DisciplineController {
     async update(request: FastifyRequest<{ Params: { id: string }; Body: UpdateDisciplineRequest }>, reply: FastifyReply) {
         const discipline = await this.updateDisciplineUseCase.execute(request.params.id, request.body);
         return reply.status(200).send({ data: discipline });
+    }
+
+    async delete(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+        await this.deleteDisciplineUseCase.execute(request.params.id);
+        return reply.status(204).send();
     }
 }
