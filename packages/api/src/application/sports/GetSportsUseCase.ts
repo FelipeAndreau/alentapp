@@ -1,10 +1,10 @@
-import { ISportRepository } from '../../domain/sports/ISportRepository.js';
+import { SportRepository } from '../../domain/sports/SportRepository.js';
 import { SportDTO } from '@alentapp/shared';
 
 export class GetSportsUseCase {
-    constructor(private readonly sportRepository: ISportRepository) {}
+    constructor(private sportRepository: SportRepository) {}
 
     async execute(): Promise<SportDTO[]> {
-        return this.sportRepository.findAll();
+        return await this.sportRepository.findAll();
     }
 }

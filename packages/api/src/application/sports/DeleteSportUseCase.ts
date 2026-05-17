@@ -1,22 +1,14 @@
-import { ISportRepository } from '../../domain/sports/ISportRepository.js';
-import { SportDTO } from '@alentapp/shared';
+import { SportRepository } from '../../domain/sports/SportRepository.js';
 
 export class DeleteSportUseCase {
-    constructor(private readonly sportRepository: ISportRepository) {}
+    constructor(private sportRepository: SportRepository) {}
 
-    async execute(id: string): Promise<SportDTO> {
-        // Verificar que el deporte existe
-        const existing = await this.sportRepository.findById(id);
-        if (!existing) {
-            throw new Error('El deporte no existe');
+    async execute(id: string): Promise<void> {
+        const sport = await this.sportRepository.findById(id);
+        if (!sport) {
+            throw new Error('Deporte no encontrado');
         }
 
-        // Verificar que no fue dado de baja previamente
-        if (existing.deleted_at !== null) {
-            throw new Error('El deporte ya fue dado de baja');
-        }
-
-        // Soft delete
-        return await this.sportRepository.softDelete(id);
+        await this.sportRepository.delete(id);
     }
 }

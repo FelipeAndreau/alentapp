@@ -27,7 +27,6 @@ export class PaymentValidator {
   }
 
   static validateDueDate(dueDateStr: string, month: number, year: number) {
-    // #23: Validar formato explicito YYYY-MM-DD
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(dueDateStr)) {
       throw new PaymentValidationError('La fecha de vencimiento debe tener el formato YYYY-MM-DD');

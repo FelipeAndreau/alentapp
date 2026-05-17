@@ -6,13 +6,13 @@ import { PostgresMemberRepository } from './infrastructure/members/PostgresMembe
 import { PostgresPaymentRepository } from './infrastructure/payments/PostgresPaymentRepository.js';
 import { PostgresLockerRepository } from './infrastructure/lockers/PostgresLockerRepository.js';
 import { PostgresDisciplineRepository } from './infrastructure/disciplines/PostgresDisciplineRepository.js';
-import { PostgresSportRepository } from './infrastructure/PostgresSportRepository.js';
+import { PostgresSportRepository } from './infrastructure/sports/PostgresSportRepository.js';
 
 // DOMINIO (VALIDADORES Y SERVICIOS)
 import { MemberValidator } from './domain/members/services/MemberValidator.js';
 import { DisciplineValidator } from './domain/disciplines/services/DisciplineValidator.js';
 import { LockerValidator } from './domain/lockers/services/LockerValidator.js';
-import { SportValidator } from './domain/services/SportValidator.js';
+import { SportValidator } from './domain/sports/services/SportValidator.js';
 import { SystemClock } from './domain/services/Clock.js';
 
 // ERRORES DE DOMINIO PARA EL HANDLER GLOBAL
@@ -50,7 +50,7 @@ import { MemberController } from './delivery/members/MemberController.js';
 import { PaymentController } from './delivery/payments/PaymentController.js';
 import { LockerController } from './delivery/lockers/LockerController.js';
 import { DisciplineController } from './delivery/disciplines/DisciplineController.js';
-import { SportController } from './delivery/SportController.js';
+import { SportController } from './delivery/sports/SportController.js';
 
 export function buildApp() {
     const server = Fastify({
