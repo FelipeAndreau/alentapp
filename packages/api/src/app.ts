@@ -17,7 +17,6 @@ import { GetPaymentsUseCase } from './application/payments/GetPaymentsUseCase.js
 import { PaymentController } from './delivery/PaymentController.js';
 
 import { PostgresSportRepository } from './infrastructure/PostgresSportRepository.js';
-import { SportValidator } from './domain/services/SportValidator.js';
 import { CreateSportUseCase } from './application/sports/CreateSportUseCase.js';
 import { GetSportsUseCase } from './application/sports/GetSportsUseCase.js';
 import { UpdateSportUseCase } from './application/sports/UpdateSportUseCase.js';
@@ -139,17 +138,10 @@ export function buildApp() {
     // Sport endpoints
 
     const sportRepo = new PostgresSportRepository();
-    const sportValidator = new SportValidator(sportRepo);
 
-    const createSportUseCase = new CreateSportUseCase(
-        sportRepo,
-        sportValidator,
-    );
+    const createSportUseCase = new CreateSportUseCase(sportRepo);
     const getSportsUseCase = new GetSportsUseCase(sportRepo);
-    const updateSportUseCase = new UpdateSportUseCase(
-        sportRepo,
-        sportValidator,
-    );
+    const updateSportUseCase = new UpdateSportUseCase(sportRepo);
     const deleteSportUseCase = new DeleteSportUseCase(sportRepo);
 
     const sportController = new SportController(
