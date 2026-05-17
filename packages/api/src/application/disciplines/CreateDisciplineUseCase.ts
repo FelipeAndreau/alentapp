@@ -1,17 +1,18 @@
-import { IDisciplineRepository } from '../../domain/IDisciplineRepository.js';
-import { MemberRepository } from '../../domain/MemberRepository.js';
-import { CreateDisciplineRequest, DisciplineDTO } from '@alentapp/shared';
-import { MemberNotFoundForDisciplineError } from '../../domain/errors/DisciplineErrors.js';
-import { DisciplineValidator } from '../../domain/services/DisciplineValidator.js';
+import { DisciplineRepository } from '../../domain/disciplines/DisciplineRepository.js';
+import { MemberRepository } from '../../domain/members/MemberRepository.js';
+import { DisciplineValidator } from '../../domain/disciplines/services/DisciplineValidator.js';
+import { DisciplineDTO, CreateDisciplineRequest } from '@alentapp/shared';
+import { MemberNotFoundForDisciplineError } from '../../domain/disciplines/errors/DisciplineErrors.js';
 
 export class CreateDisciplineUseCase {
     constructor(
-        private readonly disciplineRepository: IDisciplineRepository,
+        private readonly disciplineRepository: DisciplineRepository,
         private readonly memberRepository: MemberRepository,
+        private readonly disciplineValidator: DisciplineValidator,
     ) {}
 
     async execute(data: CreateDisciplineRequest): Promise<DisciplineDTO> {
-        DisciplineValidator.validateDates(data.start_date, data.end_date);
+        this.disciplineValidator.validateDates(data.start_date, data.end_date);
 
         const member = await this.memberRepository.findById(data.member_id);
         if (!member) {

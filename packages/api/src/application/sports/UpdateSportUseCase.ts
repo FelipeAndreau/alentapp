@@ -1,13 +1,13 @@
-import { ISportRepository } from '../../domain/sports/ISportRepository.js';
+import { SportRepository } from '../../domain/sports/SportRepository.js';
 import { UpdateSportRequest, SportDTO } from '@alentapp/shared';
 import {
     SportNotFoundError,
     SportAlreadyDeletedError,
     SportValidationError,
-} from '../../domain/errors/SportErrors.js';
+} from '../../domain/sports/errors/SportErrors.js';
 
 export class UpdateSportUseCase {
-    constructor(private readonly sportRepository: ISportRepository) {}
+    constructor(private readonly sportRepository: SportRepository) {}
 
     async execute(id: string, request: UpdateSportRequest): Promise<SportDTO> {
         const existing = await this.sportRepository.findById(id);

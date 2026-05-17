@@ -1,12 +1,14 @@
-import { ISportRepository } from '../../domain/sports/ISportRepository.js';
+import { SportRepository } from '../../domain/sports/SportRepository.js';
 import { CreateSportRequest, SportDTO } from '@alentapp/shared';
 import {
     SportNameConflictError,
     SportValidationError,
-} from '../../domain/errors/SportErrors.js';
+} from '../../domain/sports/errors/SportErrors.js';
 
 export class CreateSportUseCase {
-    constructor(private readonly sportRepository: ISportRepository) {}
+    constructor(
+        private sportRepository: SportRepository,
+    ) {}
 
     async execute(request: CreateSportRequest): Promise<SportDTO> {
         if (!request.name || request.name.trim() === '') {

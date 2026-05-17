@@ -1,13 +1,13 @@
-import { IPaymentRepository } from '../../domain/IPaymentRepository.js';
-import { MemberRepository } from '../../domain/MemberRepository.js';
+import { IPaymentRepository } from '../../domain/payments/IPaymentRepository.js';
+import { MemberRepository } from '../../domain/members/MemberRepository.js';
 import { CreatePaymentRequest, PaymentDTO } from '@alentapp/shared';
 import { 
   PaymentValidationError, 
   MemberNotFoundError, 
   DuplicateActivePaymentError,
   InactiveMemberError 
-} from '../../domain/errors/PaymentErrors.js';
-import { PaymentValidator } from '../../domain/services/PaymentValidator.js';
+} from '../../domain/payments/errors/PaymentErrors.js';
+import { PaymentValidator } from '../../domain/payments/services/PaymentValidator.js';
 
 export class CreatePaymentUseCase {
   constructor(

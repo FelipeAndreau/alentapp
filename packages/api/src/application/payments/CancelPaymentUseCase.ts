@@ -1,6 +1,6 @@
-import { IPaymentRepository } from '../../domain/IPaymentRepository.js';
+import { IPaymentRepository } from '../../domain/payments/IPaymentRepository.js';
 import { PaymentDTO } from '@alentapp/shared';
-import { PaymentNotFoundError, PaymentAlreadyPaidError } from '../../domain/errors/PaymentErrors.js';
+import { PaymentNotFoundError, PaymentAlreadyPaidError } from '../../domain/payments/errors/PaymentErrors.js';
 
 export class CancelPaymentUseCase {
   constructor(

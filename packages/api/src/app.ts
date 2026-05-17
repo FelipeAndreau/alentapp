@@ -202,7 +202,7 @@ export function buildApp() {
     // HEALTHCHECK
     server.get('/api/health', async (_req, rep) => {
         try {
-            await memberRepo.findAll(); 
+            await memberRepo.findAll(); // Simple check to verify DB connection
             return rep.status(200).send({ status: 'ok', timestamp: new Date().toISOString() });
         } catch (error) {
             return rep.status(503).send({ status: 'error', database: 'unreachable' });

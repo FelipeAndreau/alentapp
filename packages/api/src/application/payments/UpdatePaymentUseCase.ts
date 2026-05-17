@@ -1,7 +1,7 @@
-import { IPaymentRepository } from '../../domain/IPaymentRepository.js';
+import { IPaymentRepository } from '../../domain/payments/IPaymentRepository.js';
 import { PaymentDTO } from '@alentapp/shared';
-import { PaymentNotFoundError, PaymentNotModifiableError } from '../../domain/errors/PaymentErrors.js';
-import { PaymentValidator } from '../../domain/services/PaymentValidator.js';
+import { PaymentNotFoundError, PaymentNotModifiableError } from '../../domain/payments/errors/PaymentErrors.js';
+import { PaymentValidator } from '../../domain/payments/services/PaymentValidator.js';
 
 export class UpdatePaymentUseCase {
   constructor(private readonly paymentRepository: IPaymentRepository) {}

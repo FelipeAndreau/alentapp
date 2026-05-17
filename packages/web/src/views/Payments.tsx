@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Box, Heading, VStack, Spinner, Center, Text, Flex, HStack, Button, Stack, Input } from '@chakra-ui/react';
 import { LuPlus, LuRefreshCw } from "react-icons/lu";
-import type { PaymentDTO, MemberDTO, CreatePaymentRequest } from '@alentapp/shared';
+import type { PaymentDTO, MemberDTO } from '@alentapp/shared';
 import { paymentsService } from '../services/payments';
 import { membersService } from '../services/members';
 import { PaymentItem } from '../components/PaymentItem';
@@ -35,8 +35,9 @@ export function PaymentsView() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<PaymentDTO | null>(null);
   
-  const [formData, setFormData] = useState<CreatePaymentRequest>({
+  const [formData, setFormData] = useState({
     member_id: "",
     amount: 0,
     month: new Date().getMonth() + 1,
@@ -77,7 +78,21 @@ export function PaymentsView() {
     );
   };
 
+  const handleEdit = (payment: PaymentDTO) => {
+    setEditingPayment(payment);
+    setFormData({
+      member_id: payment.member_id,
+      amount: Number(payment.amount),
+      month: payment.month,
+      year: payment.year,
+      due_date: payment.due_date.split('T')[0],
+    });
+    setFormErrors({});
+    setIsDialogOpen(true);
+  };
+
   const openCreateModal = () => {
+    setEditingPayment(null);
     setFormData({
       member_id: "",
       amount: 0,
@@ -100,6 +115,15 @@ export function PaymentsView() {
       errors.amount = "El monto debe ser mayor a 0";
     }
 
+    // Validacion de fecha de vencimiento vs periodo
+    const dueDate = new Date(formData.due_date);
+    const dueDateMonth = dueDate.getUTCMonth() + 1;
+    const dueDateYear = dueDate.getUTCFullYear();
+
+    if (dueDateYear < formData.year || (dueDateYear === formData.year && dueDateMonth < formData.month)) {
+      errors.due_date = "La fecha de vencimiento no puede ser anterior al mes/año del pago";
+    }
+
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       toaster.create({ title: "Corrija los errores en el formulario", type: "warning" });
@@ -109,17 +133,29 @@ export function PaymentsView() {
     setIsSubmitting(true);
     setFormErrors({});
     try {
-      await paymentsService.create(formData);
-      toaster.create({ title: "Pago creado con exito", type: "success" });
+      if (editingPayment) {
+        // We only allow editing amount and due_date as per TDD-0011 logic
+        const updated = await paymentsService.update(editingPayment.id, {
+          amount: formData.amount.toString(),
+          due_date: formData.due_date,
+        });
+        toaster.create({ title: "Pago actualizado con exito", type: "success" });
+        handleUpdate(updated);
+      } else {
+        await paymentsService.create({
+          ...formData,
+          amount: formData.amount.toString()
+        });
+        toaster.create({ title: "Pago creado con exito", type: "success" });
+        fetchData();
+      }
       setIsDialogOpen(false);
-      fetchData();
     } catch (err: any) {
       toaster.create({ 
-        title: "No se pudo crear el pago", 
+        title: editingPayment ? "No se pudo actualizar el pago" : "No se pudo crear el pago", 
         description: err.message, 
         type: "error" 
       });
-      // Try to map server errors to fields if possible
       if (err.message.includes("duplicado")) {
         setFormErrors({ period: "Ya existe un pago para este socio en este periodo" });
       }
@@ -190,7 +226,8 @@ export function PaymentsView() {
                     </Text>
                     <PaymentItem 
                       payment={payment} 
-                      onUpdate={handleUpdate} 
+                      onUpdate={handleUpdate}
+                      onEdit={handleEdit}
                     />
                   </Box>
                 );
@@ -202,7 +239,7 @@ export function PaymentsView() {
         <DialogContent>
           <form onSubmit={handleSubmit}>
             <DialogHeader>
-              <DialogTitle>Crear Nuevo Pago</DialogTitle>
+              <DialogTitle>{editingPayment ? 'Editar Pago' : 'Crear Nuevo Pago'}</DialogTitle>
             </DialogHeader>
             <DialogBody>
               <Stack gap="4">
@@ -216,6 +253,7 @@ export function PaymentsView() {
                     collection={membersCollection} 
                     value={formData.member_id ? [formData.member_id] : []}
                     onValueChange={(e) => setFormData({ ...formData, member_id: e.value[0] })}
+                    disabled={!!editingPayment}
                   >
                     <SelectTrigger>
                       <SelectValueText placeholder="Seleccione un socio" />
@@ -258,9 +296,10 @@ export function PaymentsView() {
                       required
                       min={1}
                       max={12}
+                      disabled={!!editingPayment}
                     />
                   </Field>
-                  <Field label="Ano" required>
+                  <Field label="Año" required>
                     <Input 
                       type="number" 
                       value={formData.year}
@@ -268,10 +307,16 @@ export function PaymentsView() {
                       required
                       min={2000}
                       max={2100}
+                      disabled={!!editingPayment}
                     />
                   </Field>
                 </HStack>
-                <Field label="Fecha de Vencimiento" required>
+                <Field 
+                  label="Fecha de Vencimiento" 
+                  required 
+                  invalid={!!formErrors.due_date} 
+                  errorText={formErrors.due_date}
+                >
                   <Input 
                     type="date" 
                     value={formData.due_date}
@@ -286,7 +331,7 @@ export function PaymentsView() {
                 <Button variant="outline">Cancelar</Button>
               </DialogActionTrigger>
               <Button type="submit" colorPalette="blue" loading={isSubmitting}>
-                Crear Pago
+                {editingPayment ? 'Guardar Cambios' : 'Crear Pago'}
               </Button>
             </DialogFooter>
             <DialogCloseTrigger />

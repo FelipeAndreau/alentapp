@@ -1,10 +1,10 @@
-import { IDisciplineRepository } from '../../domain/IDisciplineRepository.js';
+import { DisciplineRepository } from '../../domain/disciplines/DisciplineRepository.js';
 import { DisciplineDTO } from '@alentapp/shared';
 
 export class GetDisciplinesUseCase {
-    constructor(private readonly disciplineRepository: IDisciplineRepository) {}
+    constructor(private readonly disciplineRepository: DisciplineRepository) {}
 
     async execute(): Promise<DisciplineDTO[]> {
-        return await this.disciplineRepository.getAll();
+        return await this.disciplineRepository.findAll();
     }
 }

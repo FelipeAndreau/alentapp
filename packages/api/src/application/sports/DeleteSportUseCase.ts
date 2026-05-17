@@ -1,12 +1,12 @@
-import { ISportRepository } from '../../domain/sports/ISportRepository.js';
+import { SportRepository } from '../../domain/sports/SportRepository.js';
 import { SportDTO } from '@alentapp/shared';
 import {
     SportNotFoundError,
     SportAlreadyDeletedError,
-} from '../../domain/errors/SportErrors.js';
+} from '../../domain/sports/errors/SportErrors.js';
 
 export class DeleteSportUseCase {
-    constructor(private readonly sportRepository: ISportRepository) {}
+    constructor(private sportRepository: SportRepository) {}
 
     async execute(id: string): Promise<SportDTO> {
         const existing = await this.sportRepository.findById(id);
@@ -17,6 +17,7 @@ export class DeleteSportUseCase {
             throw new SportAlreadyDeletedError();
         }
 
-        return await this.sportRepository.softDelete(id);
+        await this.sportRepository.delete(id);
+        return { ...existing, deleted_at: new Date().toISOString() };
     }
 }

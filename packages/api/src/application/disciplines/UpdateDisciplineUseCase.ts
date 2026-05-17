@@ -1,11 +1,12 @@
-import { IDisciplineRepository } from '../../domain/IDisciplineRepository.js';
+import { DisciplineRepository } from '../../domain/disciplines/DisciplineRepository.js';
 import { UpdateDisciplineRequest, DisciplineDTO } from '@alentapp/shared';
-import { DisciplineNotFoundError } from '../../domain/errors/DisciplineErrors.js';
-import { DisciplineValidator } from '../../domain/services/DisciplineValidator.js';
+import { DisciplineNotFoundError } from '../../domain/disciplines/errors/DisciplineErrors.js';
+import { DisciplineValidator } from '../../domain/disciplines/services/DisciplineValidator.js';
 
 export class UpdateDisciplineUseCase {
     constructor(
-        private readonly disciplineRepository: IDisciplineRepository,
+        private readonly disciplineRepository: DisciplineRepository,
+        private readonly disciplineValidator: DisciplineValidator,
     ) {}
 
     async execute(id: string, data: UpdateDisciplineRequest): Promise<DisciplineDTO> {
@@ -15,7 +16,7 @@ export class UpdateDisciplineUseCase {
         if (data.start_date !== undefined || data.end_date !== undefined) {
             const finalStartDate = data.start_date ?? existing.start_date;
             const finalEndDate = data.end_date ?? existing.end_date;
-            DisciplineValidator.validateDates(finalStartDate, finalEndDate);
+            this.disciplineValidator.validateDates(finalStartDate, finalEndDate);
         }
 
         const updated: DisciplineDTO = {
