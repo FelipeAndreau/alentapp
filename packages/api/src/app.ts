@@ -199,6 +199,16 @@ export function buildApp() {
     server.patch('/api/v1/sports/:id', sportController.update.bind(sportController));
     server.delete('/api/v1/sports/:id', sportController.delete.bind(sportController));
 
+    // HEALTHCHECK
+    server.get('/api/health', async (_req, rep) => {
+        try {
+            await memberRepo.findAll(); // Simple check to verify DB connection
+            return rep.status(200).send({ status: 'ok', timestamp: new Date().toISOString() });
+        } catch (error) {
+            return rep.status(503).send({ status: 'error', database: 'unreachable' });
+        }
+    });
+
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'Alentapp API OK' });
     });
