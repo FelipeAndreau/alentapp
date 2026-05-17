@@ -44,7 +44,7 @@ export class SportController {
         request: FastifyRequest<{ Params: { id: string } }>,
         reply: FastifyReply,
     ) {
-        await this.deleteSportUseCase.execute(request.params.id);
-        return reply.status(204).send();
+        const sport = await this.deleteSportUseCase.execute(request.params.id);
+        return reply.status(200).send({ data: sport });
     }
 }
