@@ -94,6 +94,15 @@ export function SportsView() {
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (createForm.max_capacity <= 0 || createForm.additional_price < 0) {
+            toaster.create({
+                title: 'Corrige los errores del formulario',
+                type: 'warning',
+            });
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             await sportsService.create(createForm);
@@ -196,7 +205,12 @@ export function SportsView() {
                                         }
                                     />
                                 </Field>
-                                <Field label="Capacidad Máxima" required>
+                                <Field
+                                    label="Capacidad Máxima"
+                                    required
+                                    invalid={createForm.max_capacity <= 0}
+                                    errorText="La capacidad máxima debe ser mayor a cero"
+                                >
                                     <Input
                                         type="number"
                                         placeholder="Ej. 30"
@@ -209,11 +223,14 @@ export function SportsView() {
                                                 ),
                                             })
                                         }
-                                        required
-                                        min={1}
                                     />
                                 </Field>
-                                <Field label="Precio Adicional" required>
+                                <Field
+                                    label="Precio Adicional"
+                                    required
+                                    invalid={createForm.additional_price < 0}
+                                    errorText="El precio adicional no puede ser negativo"
+                                >
                                     <Input
                                         type="number"
                                         placeholder="Ej. 5000"
@@ -226,8 +243,6 @@ export function SportsView() {
                                                 ),
                                             })
                                         }
-                                        required
-                                        min={0}
                                     />
                                 </Field>
                                 <Field label="¿Requiere Certificado Médico?">
@@ -289,7 +304,15 @@ export function SportsView() {
                                         }
                                     />
                                 </Field>
-                                <Field label="Capacidad Máxima" required>
+                                <Field
+                                    label="Capacidad Máxima"
+                                    required
+                                    invalid={
+                                        editForm.max_capacity !== undefined &&
+                                        editForm.max_capacity <= 0
+                                    }
+                                    errorText="La capacidad máxima debe ser mayor a cero"
+                                >
                                     <Input
                                         type="number"
                                         placeholder="Ej. 30"
@@ -302,8 +325,6 @@ export function SportsView() {
                                                 ),
                                             })
                                         }
-                                        required
-                                        min={1}
                                     />
                                 </Field>
                             </Stack>

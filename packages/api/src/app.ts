@@ -2,26 +2,27 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 
 // INFRAESTRUCTURA (REPOS)
-import { PostgresMemberRepository } from './infrastructure/PostgresMemberRepository.js';
-import { PostgresPaymentRepository } from './infrastructure/PostgresPaymentRepository.js';
-import { PostgresLockerRepository } from './infrastructure/PostgresLockerRepository.js';
-import { PostgresDisciplineRepository } from './infrastructure/PostgresDisciplineRepository.js';
-import { PostgresSportRepository } from './infrastructure/PostgresSportRepository.js';
+import { PostgresMemberRepository } from './infrastructure/members/PostgresMemberRepository.js';
+import { PostgresPaymentRepository } from './infrastructure/payments/PostgresPaymentRepository.js';
+import { PostgresLockerRepository } from './infrastructure/lockers/PostgresLockerRepository.js';
+import { PostgresDisciplineRepository } from './infrastructure/disciplines/PostgresDisciplineRepository.js';
+import { PostgresSportRepository } from './infrastructure/sports/PostgresSportRepository.js';
 
 // DOMINIO (VALIDADORES Y SERVICIOS)
-import { MemberValidator } from './domain/services/MemberValidator.js';
-import { LockerValidator } from './domain/services/LockerValidator.js';
-import { SportValidator } from './domain/services/SportValidator.js';
+import { MemberValidator } from './domain/members/services/MemberValidator.js';
+import { DisciplineValidator } from './domain/disciplines/services/DisciplineValidator.js';
+import { LockerValidator } from './domain/lockers/services/LockerValidator.js';
+import { SportValidator } from './domain/sports/services/SportValidator.js';
 import { SystemClock } from './domain/services/Clock.js';
 
 // ERRORES DE DOMINIO PARA EL HANDLER GLOBAL
-import { NotFoundError, ValidationError, ConflictError } from './domain/errors/PaymentErrors.js';
+import { NotFoundError, ValidationError, ConflictError } from './domain/payments/errors/PaymentErrors.js';
 
 // APLICACIÓN (USE CASES)
-import { CreateMemberUseCase } from './application/NewMemberUseCase.js';
-import { GetMembersUseCase } from './application/GetMembersUseCase.js';
-import { UpdateMemberUseCase } from './application/UpdateMemberUseCase.js';
-import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
+import { CreateMemberUseCase } from './application/members/NewMemberUseCase.js';
+import { GetMembersUseCase } from './application/members/GetMembersUseCase.js';
+import { UpdateMemberUseCase } from './application/members/UpdateMemberUseCase.js';
+import { DeleteMemberUseCase } from './application/members/DeleteMemberUseCase.js';
 
 import { CreatePaymentUseCase } from './application/payments/CreatePaymentUseCase.js';
 import { UpdatePaymentUseCase } from './application/payments/UpdatePaymentUseCase.js';
@@ -29,10 +30,10 @@ import { MarkPaymentAsPaidUseCase } from './application/payments/MarkPaymentAsPa
 import { CancelPaymentUseCase } from './application/payments/CancelPaymentUseCase.js';
 import { GetPaymentsUseCase } from './application/payments/GetPaymentsUseCase.js';
 
-import { CreateLockerUseCase } from './application/CreateLockerUseCase.js';
-import { GetLockersUseCase } from './application/GetLockersUseCase.js';
-import { UpdateLockerUseCase } from './application/UpdateLockerUseCase.js';
-import { DeleteLockerUseCase } from './application/DeleteLockerUseCase.js';
+import { CreateLockerUseCase } from './application/lockers/CreateLockerUseCase.js';
+import { GetLockersUseCase } from './application/lockers/GetLockersUseCase.js';
+import { UpdateLockerUseCase } from './application/lockers/UpdateLockerUseCase.js';
+import { DeleteLockerUseCase } from './application/lockers/DeleteLockerUseCase.js';
 
 import { CreateDisciplineUseCase } from './application/disciplines/CreateDisciplineUseCase.js';
 import { GetDisciplinesUseCase } from './application/disciplines/GetDisciplinesUseCase.js';
@@ -45,11 +46,11 @@ import { UpdateSportUseCase } from './application/sports/UpdateSportUseCase.js';
 import { DeleteSportUseCase } from './application/sports/DeleteSportUseCase.js';
 
 // DELIVERY (CONTROLADORES)
-import { MemberController } from './delivery/MemberController.js';
-import { PaymentController } from './delivery/PaymentController.js';
-import { LockerController } from './delivery/LockerController.js';
-import { DisciplineController } from './delivery/DisciplineController.js';
-import { SportController } from './delivery/SportController.js';
+import { MemberController } from './delivery/members/MemberController.js';
+import { PaymentController } from './delivery/payments/PaymentController.js';
+import { LockerController } from './delivery/lockers/LockerController.js';
+import { DisciplineController } from './delivery/disciplines/DisciplineController.js';
+import { SportController } from './delivery/sports/SportController.js';
 
 export function buildApp() {
     const server = Fastify({
@@ -139,11 +140,17 @@ export function buildApp() {
     );
 
     // 5. INICIALIZACIÓN DE DISCIPLINAS
-    const createDisciplineUseCase = new CreateDisciplineUseCase(disciplineRepo, memberRepo);
+    const disciplineValidator = new DisciplineValidator();
+    const createDisciplineUseCase = new CreateDisciplineUseCase(disciplineRepo, memberRepo, disciplineValidator);
     const getDisciplinesUseCase = new GetDisciplinesUseCase(disciplineRepo);
-    const updateDisciplineUseCase = new UpdateDisciplineUseCase(disciplineRepo);
+    const updateDisciplineUseCase = new UpdateDisciplineUseCase(disciplineRepo, disciplineValidator);
     const deleteDisciplineUseCase = new DeleteDisciplineUseCase(disciplineRepo);
-    const disciplineController = new DisciplineController(createDisciplineUseCase, getDisciplinesUseCase, updateDisciplineUseCase, deleteDisciplineUseCase);
+    const disciplineController = new DisciplineController(
+        createDisciplineUseCase, 
+        getDisciplinesUseCase,
+        updateDisciplineUseCase,
+        deleteDisciplineUseCase
+    );
 
     // 6. INICIALIZACIÓN DE DEPORTES
     const sportValidator = new SportValidator(sportRepo);
@@ -191,6 +198,16 @@ export function buildApp() {
     server.post('/api/v1/sports', sportController.create.bind(sportController));
     server.patch('/api/v1/sports/:id', sportController.update.bind(sportController));
     server.delete('/api/v1/sports/:id', sportController.delete.bind(sportController));
+
+    // HEALTHCHECK
+    server.get('/api/health', async (_req, rep) => {
+        try {
+            await memberRepo.findAll(); 
+            return rep.status(200).send({ status: 'ok', timestamp: new Date().toISOString() });
+        } catch (error) {
+            return rep.status(503).send({ status: 'error', database: 'unreachable' });
+        }
+    });
 
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'Alentapp API OK' });

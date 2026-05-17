@@ -1,35 +1,37 @@
 import { ISportRepository } from '../../domain/sports/ISportRepository.js';
-import { SportValidator } from '../../domain/services/SportValidator.js';
 import { UpdateSportRequest, SportDTO } from '@alentapp/shared';
+import {
+    SportNotFoundError,
+    SportAlreadyDeletedError,
+    SportValidationError,
+} from '../../domain/errors/SportErrors.js';
 
 export class UpdateSportUseCase {
-    constructor(
-        private readonly sportRepository: ISportRepository,
-        private readonly sportValidator: SportValidator,
-    ) {}
+    constructor(private readonly sportRepository: ISportRepository) {}
 
     async execute(id: string, request: UpdateSportRequest): Promise<SportDTO> {
-        // Verificar que el deporte existe y está activo
         const existing = await this.sportRepository.findById(id);
         if (!existing) {
-            throw new Error('El deporte no existe');
+            throw new SportNotFoundError();
         }
         if (existing.deleted_at !== null) {
-            throw new Error('No se puede modificar un deporte eliminado');
+            throw new SportAlreadyDeletedError();
         }
 
-        // Validaciones de los campos enviados
-        if (request.max_capacity !== undefined) {
-            SportValidator.validateMaxCapacity(request.max_capacity);
+        if (request.max_capacity !== undefined && request.max_capacity <= 0) {
+            throw new SportValidationError(
+                'La capacidad máxima debe ser mayor a cero',
+            );
         }
         if (
             request.description !== undefined &&
             request.description.trim() === ''
         ) {
-            throw new Error('La descripción no puede ser un texto vacío');
+            throw new SportValidationError(
+                'La descripción no puede ser un texto vacío',
+            );
         }
 
-        // Persistir
         return this.sportRepository.update(id, request);
     }
 }
