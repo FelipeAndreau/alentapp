@@ -1,0 +1,24 @@
+import { DisciplineRepository } from '../../domain/disciplines/DisciplineRepository.js';
+import { MemberRepository } from '../../domain/members/MemberRepository.js';
+import { DisciplineValidator } from '../../domain/disciplines/services/DisciplineValidator.js';
+import { DisciplineDTO, CreateDisciplineRequest } from '@alentapp/shared';
+import { MemberNotFoundForDisciplineError } from '../../domain/disciplines/errors/DisciplineErrors.js';
+
+export class CreateDisciplineUseCase {
+    constructor(
+        private readonly disciplineRepository: DisciplineRepository,
+        private readonly memberRepository: MemberRepository,
+        private readonly disciplineValidator: DisciplineValidator,
+    ) {}
+
+    async execute(data: CreateDisciplineRequest): Promise<DisciplineDTO> {
+        this.disciplineValidator.validateDates(data.start_date, data.end_date);
+
+        const member = await this.memberRepository.findById(data.member_id);
+        if (!member) {
+            throw new MemberNotFoundForDisciplineError(data.member_id);
+        }
+
+        return await this.disciplineRepository.create(data);
+    }
+}

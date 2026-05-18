@@ -37,7 +37,7 @@ Se definirá la entidad `Member` con las siguientes propiedades y restricciones:
 - `nombre`: Cadena de texto.
 - `email`: Cadena de texto, único y validado por formato.
 - `categoria`: Enumeración (`Pleno`, `Cadete`, `Honorario`).
-- `estadoCuenta`: Enumeración con valor por defecto `Activo`.
+- `estadoCuenta`: Enumeración con valor por defecto `Activo`. (Nota: El estado visual "Moroso" es un estado derivado en el Frontend, calculado en base a si el socio posee pagos con estado "Pending" cuya fecha de vencimiento es anterior a la fecha actual. No se almacena físicamente en la BD como "Moroso").
 - `creadoEl`: Fecha de creación autogenerada.
 
 ### Contrato de API (@alentapp/shared)
