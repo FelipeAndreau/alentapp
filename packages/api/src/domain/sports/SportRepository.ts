@@ -10,5 +10,5 @@ export interface ISportRepository {
     findById(id: string): Promise<SportDTO | null>;
     findByName(name: string): Promise<SportDTO | null>;
     findAll(): Promise<SportDTO[]>;
-    softDelete(id: string): Promise<SportDTO>;
+    delete(id: string): Promise<void>; //es el softDelete
 }
