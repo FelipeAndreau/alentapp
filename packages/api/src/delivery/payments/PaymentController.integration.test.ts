@@ -36,7 +36,50 @@ vi.mock('../../infrastructure/members/PostgresMemberRepository.js', () => {
         if (id === 'non-existent') return null;
         return { id, name: 'Socio Test', status: 'Activo' };
       }
+      async findAll() { return []; }
+      async findByDni() { return null; }
+      async create(d: any) { return { id: 'new-m', ...d }; }
+      async update(id: string, d: any) { return { id, ...d }; }
+      async delete() { return; }
     }
+  };
+});
+
+vi.mock('../../infrastructure/lockers/PostgresLockerRepository.js', () => {
+  return {
+    PostgresLockerRepository: class {
+      async create(d: any) { return { id: 'l1', ...d }; }
+      async findAll() { return []; }
+      async findById() { return null; }
+      async findByNumber() { return null; }
+      async update(id: string, d: any) { return { id, ...d }; }
+      async delete() { return; }
+    },
+  };
+});
+
+vi.mock('../../infrastructure/disciplines/PostgresDisciplineRepository.js', () => {
+  return {
+    PostgresDisciplineRepository: class {
+      async create(d: any) { return { id: 'd1', ...d }; }
+      async findAll() { return []; }
+      async findById() { return null; }
+      async update(d: any) { return d; }
+      async delete() { return; }
+    },
+  };
+});
+
+vi.mock('../../infrastructure/sports/PostgresSportRepository.js', () => {
+  return {
+    PostgresSportRepository: class {
+      async create(d: any) { return { id: 's1', ...d }; }
+      async findAll() { return []; }
+      async findById() { return null; }
+      async findByName() { return null; }
+      async update(id: string, d: any) { return { id, ...d }; }
+      async delete() { return; }
+    },
   };
 });
 
