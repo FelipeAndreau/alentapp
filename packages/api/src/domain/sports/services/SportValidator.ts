@@ -1,4 +1,5 @@
 import { SportRepository } from '../SportRepository.js';
+import { SportNameConflictError } from '../errors/SportErrors.js';
 
 export class SportValidator {
     constructor(private sportRepository: SportRepository) {}
@@ -6,7 +7,7 @@ export class SportValidator {
     async validateNameIsUnique(name: string): Promise<void> {
         const sport = await this.sportRepository.findByName(name);
         if (sport) {
-            throw new Error('Ya existe un deporte con ese nombre');
+            throw new SportNameConflictError(name);
         }
     }
 }

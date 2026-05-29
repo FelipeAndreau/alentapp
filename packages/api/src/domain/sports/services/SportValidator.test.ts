@@ -1,10 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { SportValidator } from './SportValidator.js';
 import { SportRepository } from '../SportRepository.js';
+import { SportNameConflictError } from '../errors/SportErrors.js';
 
 describe('SportValidator', () => {
     describe('validateNameIsUnique', () => {
-        it('debe lanzar error si ya existe un deporte con ese nombre', async () => {
+        it('debe lanzar SportNameConflictError si ya existe un deporte con ese nombre', async () => {
             const sportRepo = {
                 findByName: vi.fn().mockResolvedValue({
                     id: 'sport-1',
@@ -20,7 +21,7 @@ describe('SportValidator', () => {
 
             await expect(
                 validator.validateNameIsUnique('Fútbol'),
-            ).rejects.toThrow('Ya existe un deporte con ese nombre');
+            ).rejects.toThrow(SportNameConflictError);
         });
     });
 });

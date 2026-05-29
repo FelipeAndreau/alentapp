@@ -4,7 +4,7 @@ import {
     UpdateSportRequest,
 } from '@alentapp/shared';
 
-export interface ISportRepository {
+export interface SportRepository {
     create(data: CreateSportRequest): Promise<SportDTO>;
     update(id: string, data: UpdateSportRequest): Promise<SportDTO>;
     findById(id: string): Promise<SportDTO | null>;
