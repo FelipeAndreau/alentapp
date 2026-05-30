@@ -188,7 +188,6 @@ export function buildApp() {
     );
 
     // 6. INICIALIZACIÓN DE DEPORTES
-    const sportValidator = new SportValidator(sportRepo);
     const createSportUseCase = new CreateSportUseCase(sportRepo);
     const getSportsUseCase = new GetSportsUseCase(sportRepo);
     const updateSportUseCase = new UpdateSportUseCase(sportRepo);
