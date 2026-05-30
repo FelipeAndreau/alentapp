@@ -12,7 +12,6 @@ import { PostgresSportRepository } from './infrastructure/sports/PostgresSportRe
 import { MemberValidator } from './domain/members/services/MemberValidator.js';
 import { DisciplineValidator } from './domain/disciplines/services/DisciplineValidator.js';
 import { LockerValidator } from './domain/lockers/services/LockerValidator.js';
-import { SportValidator } from './domain/sports/services/SportValidator.js';
 import { SystemClock } from './domain/services/Clock.js';
 
 // ERRORES DE DOMINIO PARA EL HANDLER GLOBAL
