@@ -1,28 +1,34 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LockerValidator } from './LockerValidator.js';
 import { LockerRepository } from '../LockerRepository.js';
 import { MemberRepository } from '../../members/MemberRepository.js';
 
 describe('LockerValidator', () => {
-    const lockerRepo = {
-        findByNumber: vi.fn(),
-        findById: vi.fn(),
-        create: vi.fn(),
-        findAll: vi.fn(),
-        update: vi.fn(),
-        delete: vi.fn(),
-    } as unknown as LockerRepository;
+    let lockerRepo: LockerRepository;
+    let memberRepo: MemberRepository;
+    let validator: LockerValidator;
 
-    const memberRepo = {
-        findById: vi.fn(),
-        findAll: vi.fn(),
-        findByDni: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-        delete: vi.fn(),
-    } as unknown as MemberRepository;
+    beforeEach(() => {
+        lockerRepo = {
+            findByNumber: vi.fn(),
+            findById: vi.fn(),
+            create: vi.fn(),
+            findAll: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+        } as unknown as LockerRepository;
 
-    const validator = new LockerValidator(lockerRepo, memberRepo);
+        memberRepo = {
+            findById: vi.fn(),
+            findAll: vi.fn(),
+            findByDni: vi.fn(),
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+        } as unknown as MemberRepository;
+
+        validator = new LockerValidator(lockerRepo, memberRepo);
+    });
 
     describe('validateNumberIsUnique', () => {
         it('debe lanzar error si ya existe un casillero con ese número', async () => {

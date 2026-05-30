@@ -75,7 +75,7 @@ vi.mock('../../infrastructure/sports/PostgresSportRepository.js', () => {
     };
 });
 
-describe('Locker API — Integration Tests', () => {
+describe('Locker API – Integration Tests', () => {
     let app: FastifyInstance;
 
     beforeAll(async () => {
@@ -134,6 +134,20 @@ describe('Locker API — Integration Tests', () => {
             });
 
             expect(response.statusCode).toBe(400);
+        });
+    });
+
+    describe('PUT /api/v1/lockers/:id', () => {
+        it('7. debe retornar 200 y actualizar el casillero', async () => {
+            const response = await app.inject({
+                method: 'PUT',
+                url: '/api/v1/lockers/uuid-1',
+                payload: { location: 'Vestuario Actualizado' },
+            });
+
+            expect(response.statusCode).toBe(200);
+            const body = JSON.parse(response.payload);
+            expect(body.data).toBeDefined();
         });
     });
 
