@@ -24,6 +24,7 @@ Permitir que un administrativo corrija o actualice los datos de una disciplina y
 - El sistema debe validar que la disciplina a modificar exista. Si no existe, debe retornar un error claro.
 - Si se modifican las fechas, el sistema debe volver a validar que `end_date` sea estrictamente posterior a `start_date`.
 - Los campos no enviados en el body deben conservar su valor original.
+- El campo member_id es inmutable y no puede modificarse una vez creada la disciplina.
 - Al finalizar con éxito, el sistema debe retornar la disciplina con los datos actualizados.
 
 ---
@@ -36,7 +37,7 @@ No se requieren cambios en el schema de Prisma. La entidad `Discipline` ya fue d
 
 ### Contrato de API (@alentapp/shared)
 
-- **Endpoint**: `PUT /api/v1/disciplines/:id`
+- **Endpoint**: `PATCH /api/v1/disciplines/:id`
 - **Request Body** (`UpdateDisciplineRequest`):
 
 ```ts
@@ -72,7 +73,7 @@ No se requieren cambios en el schema de Prisma. La entidad `Discipline` ya fue d
 
 - **Infrastructure**:
   - `PostgresDisciplineRepository`: se extiende con la implementación del método `update` usando Prisma.
-  - `DisciplineController`: registra la ruta `PUT /api/v1/disciplines/:id` en Fastify y delega al caso de uso.
+  - `DisciplineController`: registra la ruta `PATCH /api/v1/disciplines/:id` en Fastify y delega al caso de uso.
 
 ---
 
@@ -83,6 +84,8 @@ No se requieren cambios en el schema de Prisma. La entidad `Discipline` ya fue d
 | `id` de disciplina no encontrado | Error: "Disciplina no encontrada" | 404 Not Found |
 | `end_date` actualizada igual a `start_date` | Error: "La fecha de fin debe ser posterior a la de inicio" | 400 Bad Request |
 | `end_date` actualizada anterior a `start_date` | Error: "La fecha de fin debe ser posterior a la de inicio" | 400 Bad Request |
+| Solo `end_date` enviada sin `start_date` | Se usa `start_date` original para revalidar `end_date > start_date` | 400 o 200 según resultado |
+| Solo `start_date` enviada sin `end_date` | Se usa `end_date` original para revalidar `end_date > start_date` | 400 o 200 según resultado |
 | Body vacío (sin campos) | Se retorna la disciplina sin cambios | 200 OK |
 | Error de conexión a la base de datos | Error: "Error interno, reintente más tarde" | 500 Internal Server Error |
 
@@ -94,4 +97,4 @@ No se requieren cambios en el schema de Prisma. La entidad `Discipline` ya fue d
 2. Extender puerto `DisciplineRepository` con método `update`.
 3. Implementar `UpdateDisciplineUseCase` en Aplicación.
 4. Extender `PostgresDisciplineRepository` con método `update`.
-5. Implementar ruta `PUT` en `DisciplineController`.
+5. Implementar ruta `PATCH` en `DisciplineController`.
