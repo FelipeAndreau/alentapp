@@ -68,7 +68,7 @@ describe('Locker API — End-to-End Tests', () => {
     it('3. DELETE: debe eliminar el casillero de la base de datos real', async () => {
         const response = await app.inject({
             method: 'DELETE',
-            url: `/api/vl/lockers/${createdLockerId}`,
+            url: `/api/v1/lockers/${createdLockerId}`,
         });
 
         expect(response.statusCode).toBe(200);
