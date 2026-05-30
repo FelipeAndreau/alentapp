@@ -3,7 +3,6 @@ import { FastifyInstance } from 'fastify';
 import { buildApp } from '../../app.js';
 import { CreatePaymentRequest } from '@alentapp/shared';
 
-// Mockeamos el repositorio para simular la base de datos
 vi.mock('../../infrastructure/payments/PostgresPaymentRepository.js', () => {
   return {
     PostgresPaymentRepository: class {
