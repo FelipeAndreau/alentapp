@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UpdateSportUseCase } from './UpdateSportUseCase.js';
 import { SportRepository } from '../../domain/sports/SportRepository.js';
+import { SportValidator } from '../../domain/sports/services/SportValidator.js';
 import {
     SportNotFoundError,
     SportAlreadyDeletedError,
@@ -10,6 +11,7 @@ import { SportDTO } from '@alentapp/shared';
 
 describe('UpdateSportUseCase', () => {
     let sportRepo: SportRepository;
+    let sportValidator: SportValidator;
     let useCase: UpdateSportUseCase;
 
     const activeSport: SportDTO = {
@@ -37,7 +39,8 @@ describe('UpdateSportUseCase', () => {
             delete: vi.fn(),
         } as unknown as SportRepository;
 
-        useCase = new UpdateSportUseCase(sportRepo);
+        sportValidator = new SportValidator(sportRepo);
+        useCase = new UpdateSportUseCase(sportRepo, sportValidator);
     });
 
     it('debe actualizar un deporte exitosamente', async () => {

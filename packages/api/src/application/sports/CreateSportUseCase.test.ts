@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CreateSportUseCase } from './CreateSportUseCase.js';
 import { SportRepository } from '../../domain/sports/SportRepository.js';
+import { SportValidator } from '../../domain/sports/services/SportValidator.js';
 import {
     SportValidationError,
     SportNameConflictError,
@@ -8,6 +9,7 @@ import {
 
 describe('CreateSportUseCase', () => {
     let sportRepo: SportRepository;
+    let sportValidator: SportValidator;
     let useCase: CreateSportUseCase;
 
     beforeEach(() => {
@@ -20,7 +22,8 @@ describe('CreateSportUseCase', () => {
             delete: vi.fn(),
         } as unknown as SportRepository;
 
-        useCase = new CreateSportUseCase(sportRepo);
+        sportValidator = new SportValidator(sportRepo);
+        useCase = new CreateSportUseCase(sportRepo, sportValidator);
     });
 
     it('debe crear un deporte exitosamente', async () => {
