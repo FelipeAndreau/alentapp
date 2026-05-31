@@ -1,4 +1,4 @@
-import { LockerRepository } from '../domain/lockers/LockerRepository.js';
+import { LockerRepository } from '../../domain/lockers/LockerRepository.js';
 
 export class DeleteLockerUseCase {
     constructor(private readonly lockerRepository: LockerRepository) { }

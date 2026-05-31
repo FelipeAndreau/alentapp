@@ -1,4 +1,4 @@
-import { LockerRepository } from '../domain/lockers/LockerRepository.js';
+import { LockerRepository } from '../../domain/lockers/LockerRepository.js';
 import { LockerDTO } from '@alentapp/shared';
 
 export class GetLockersUseCase {

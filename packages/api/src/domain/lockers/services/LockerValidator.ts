@@ -1,5 +1,5 @@
 import { LockerRepository } from '../LockerRepository.js';
-import { MemberRepository } from '../MemberRepository.js';
+import { MemberRepository } from '../../members/MemberRepository.js';
 
 export class LockerValidator {
     constructor(
