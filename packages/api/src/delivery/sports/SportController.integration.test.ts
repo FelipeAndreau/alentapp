@@ -2,6 +2,48 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../../app.js';
 
+vi.mock('../../infrastructure/members/PostgresMemberRepository.js', () => ({
+    PostgresMemberRepository: class {
+        async findAll() { return []; }
+        async findById() { return null; }
+        async findByDni() { return null; }
+        async create(d: any) { return { id: 'm1', ...d }; }
+        async update(id: string, d: any) { return { id, ...d }; }
+        async delete() { return; }
+    }
+}));
+
+vi.mock('../../infrastructure/payments/PostgresPaymentRepository.js', () => ({
+    PostgresPaymentRepository: class {
+        async save(d: any) { return { id: 'p1', ...d }; }
+        async findById() { return null; }
+        async findActiveInPeriod() { return []; }
+        async update(d: any) { return d; }
+        async findAll() { return []; }
+    }
+}));
+
+vi.mock('../../infrastructure/lockers/PostgresLockerRepository.js', () => ({
+    PostgresLockerRepository: class {
+        async findAll() { return []; }
+        async findById() { return null; }
+        async findByNumber() { return null; }
+        async create(d: any) { return { id: 'l1', ...d }; }
+        async update(id: string, d: any) { return { id, ...d }; }
+        async delete() { return; }
+    }
+}));
+
+vi.mock('../../infrastructure/disciplines/PostgresDisciplineRepository.js', () => ({
+    PostgresDisciplineRepository: class {
+        async create(d: any) { return { id: 'd1', ...d }; }
+        async findAll() { return []; }
+        async findById() { return null; }
+        async update(d: any) { return d; }
+        async delete() { return; }
+    }
+}));
+
 vi.mock('../../infrastructure/sports/PostgresSportRepository.js', () => {
     return {
         PostgresSportRepository: class {

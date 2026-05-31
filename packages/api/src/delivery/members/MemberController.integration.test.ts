@@ -3,8 +3,7 @@ import { FastifyInstance } from 'fastify';
 import { buildApp } from '../../app.js';
 import { CreateMemberRequest } from '@alentapp/shared';
 
-// Mockeamos el repositorio para que la API entera funcione sin conectarse a la Base de Datos real
-// Esto nos permite testear la integración del ciclo completo: Fastify -> Controller -> UseCase -> Validator
+// Mockeamos los 5 repositorios para que buildApp() funcione sin DATABASE_URL
 vi.mock('../../infrastructure/members/PostgresMemberRepository.js', () => {
     return {
         PostgresMemberRepository: class {
@@ -17,6 +16,48 @@ vi.mock('../../infrastructure/members/PostgresMemberRepository.js', () => {
         }
     };
 });
+
+vi.mock('../../infrastructure/payments/PostgresPaymentRepository.js', () => ({
+    PostgresPaymentRepository: class {
+        async save(d: any) { return { id: 'p1', ...d }; }
+        async findById() { return null; }
+        async findActiveInPeriod() { return []; }
+        async update(d: any) { return d; }
+        async findAll() { return []; }
+    }
+}));
+
+vi.mock('../../infrastructure/lockers/PostgresLockerRepository.js', () => ({
+    PostgresLockerRepository: class {
+        async findAll() { return []; }
+        async findById() { return null; }
+        async findByNumber() { return null; }
+        async create(d: any) { return { id: 'l1', ...d }; }
+        async update(id: string, d: any) { return { id, ...d }; }
+        async delete() { return; }
+    }
+}));
+
+vi.mock('../../infrastructure/disciplines/PostgresDisciplineRepository.js', () => ({
+    PostgresDisciplineRepository: class {
+        async create(d: any) { return { id: 'd1', ...d }; }
+        async findAll() { return []; }
+        async findById() { return null; }
+        async update(d: any) { return d; }
+        async delete() { return; }
+    }
+}));
+
+vi.mock('../../infrastructure/sports/PostgresSportRepository.js', () => ({
+    PostgresSportRepository: class {
+        async create(d: any) { return { id: 's1', ...d }; }
+        async findAll() { return []; }
+        async findById() { return null; }
+        async findByName() { return null; }
+        async update(id: string, d: any) { return { id, ...d }; }
+        async delete() { return; }
+    }
+}));
 
 describe('Member API Integration Tests', () => {
     let app: FastifyInstance;
