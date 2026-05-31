@@ -1,15 +1,6 @@
-import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../../generated/client/client.js';
-import { LockerRepository } from '../domain/lockers/LockerRepository.js';
+import { prisma } from '../PrismaClient.js';
+import { LockerRepository } from '../../domain/lockers/LockerRepository.js';
 import { LockerDTO, CreateLockerRequest, UpdateLockerRequest } from '@alentapp/shared';
-
-if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL environment variable is not set');
-}
-
-const prisma = new PrismaClient({
-    adapter: new PrismaPg(process.env.DATABASE_URL),
-});
 
 type DBLocker = {
     id: string;

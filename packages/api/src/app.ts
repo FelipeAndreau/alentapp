@@ -12,6 +12,7 @@ import { PostgresSportRepository } from './infrastructure/sports/PostgresSportRe
 import { MemberValidator } from './domain/members/services/MemberValidator.js';
 import { DisciplineValidator } from './domain/disciplines/services/DisciplineValidator.js';
 import { LockerValidator } from './domain/lockers/services/LockerValidator.js';
+import { SportValidator } from './domain/sports/services/SportValidator.js';
 import { SystemClock } from './domain/services/Clock.js';
 
 // ERRORES DE DOMINIO PARA EL HANDLER GLOBAL
@@ -187,9 +188,10 @@ export function buildApp() {
     );
 
     // 6. INICIALIZACIÓN DE DEPORTES
-    const createSportUseCase = new CreateSportUseCase(sportRepo);
+    const sportValidator = new SportValidator(sportRepo);
+    const createSportUseCase = new CreateSportUseCase(sportRepo, sportValidator);
     const getSportsUseCase = new GetSportsUseCase(sportRepo);
-    const updateSportUseCase = new UpdateSportUseCase(sportRepo);
+    const updateSportUseCase = new UpdateSportUseCase(sportRepo, sportValidator);
     const deleteSportUseCase = new DeleteSportUseCase(sportRepo);
     const sportController = new SportController(
         createSportUseCase,

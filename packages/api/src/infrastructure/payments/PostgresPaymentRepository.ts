@@ -1,4 +1,4 @@
-import { IPaymentRepository } from '../domain/payments/IPaymentRepository.js';
+import { IPaymentRepository } from '../../domain/payments/IPaymentRepository.js';
 import { PaymentDTO, PaymentStatus } from '@alentapp/shared';
 import { prisma } from '../../infrastructure/PrismaClient.js';
 
