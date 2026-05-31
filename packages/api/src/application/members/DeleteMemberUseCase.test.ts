@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DeleteMemberUseCase } from './DeleteMemberUseCase.js';
-import { MemberRepository } from '../domain/members/MemberRepository.js';
+import { MemberRepository } from '../../domain/members/MemberRepository.js';
 
 describe('DeleteMemberUseCase', () => {
     const mockMemberRepo = {
