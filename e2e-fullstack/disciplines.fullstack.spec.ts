@@ -30,6 +30,17 @@ test.describe('Disciplines Full-Stack E2E', () => {
     });
   });
 
+  test.afterAll(async ({ request }) => {
+    // Limpiamos el socio de prueba para no interferir con otros tests (ej. members).
+    // Primero obtenemos el ID real del socio creado (el DELETE requiere el UUID, no el DNI).
+    const listRes = await request.get('http://localhost:3001/api/v1/socios');
+    const members = await listRes.json();
+    const testMember = members.data?.find((m: any) => m.dni === '11223344');
+    if (testMember) {
+      await request.delete(`http://localhost:3001/api/v1/socios/${testMember.id}`);
+    }
+  });
+
   test('debe mostrar el estado vacío cuando no hay disciplinas registradas', async ({ page }) => {
     await page.goto('/disciplines');
     await expect(page.getByText('No hay disciplinas registradas.')).toBeVisible({ timeout: 10000 });

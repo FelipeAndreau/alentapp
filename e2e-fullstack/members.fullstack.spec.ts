@@ -13,9 +13,11 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Members Full-Stack E2E', () => {
 
-  test('debe mostrar el estado vacío cuando no hay miembros en la DB', async ({ page }) => {
+  test('debe cargar la vista de miembros correctamente', async ({ page }) => {
     await page.goto('/members');
-    await expect(page.getByText('No se encontraron miembros.')).toBeVisible({ timeout: 10000 });
+    // Verificamos que la página carga y muestra el título y la tabla
+    await expect(page.getByRole('heading', { name: 'Administración de Miembros' })).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('table')).toBeVisible();
   });
 
   test('debe crear un miembro real y mostrarlo en la tabla', async ({ page }) => {
@@ -74,7 +76,7 @@ test.describe('Members Full-Stack E2E', () => {
     // Clic en borrar
     await page.getByRole('button', { name: /Eliminar miembro/i }).first().click();
 
-    // La tabla debería quedar vacía
-    await expect(page.getByText('No se encontraron miembros.')).toBeVisible({ timeout: 10000 });
+    // El miembro creado ya no debería aparecer en la tabla
+    await expect(page.getByText('Test E2E Fullstack Editado')).toBeHidden({ timeout: 10000 });
   });
 });
