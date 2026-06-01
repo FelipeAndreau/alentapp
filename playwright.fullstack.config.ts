@@ -26,7 +26,7 @@ export default defineConfig({
     trace: 'on-first-retry',
     headless: true,
     launchOptions : {
-    slowMo : 1000,
+    slowMo : 100,
     },
   },
 

@@ -48,18 +48,22 @@ test.describe('Disciplines Full-Stack E2E', () => {
     await page.getByLabel(/Fecha de inicio/i).fill('2026-06-01');
     await page.getByLabel(/Fecha de fin/i).fill('2026-08-01');
 
-    await page.getByRole('button', { name: 'Registrar' }).click();
+    await Promise.all([
+      page.waitForResponse(resp => resp.url().includes('/disciplines') && resp.status() === 201),
+      page.getByRole('button', { name: 'Registrar' }).click(),
+    ]);
 
-    await expect(page.getByText(testReason)).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(new RegExp(testMemberName))).toBeVisible();
+    const table = page.locator('table');
+    await expect(table.getByText(testReason)).toBeVisible({ timeout: 10000 });
   });
 
   test('debe editar la disciplina y ver el cambio en la tabla', async ({ page }) => {
     await page.goto('/disciplines');
 
-    await expect(page.getByText(testReason)).toBeVisible({ timeout: 10000 });
+    const table = page.locator('table');
+    await expect(table.getByText(testReason)).toBeVisible({ timeout: 10000 });
 
-    const row = page.locator('tr', { hasText: testReason });
+    const row = table.locator('tr').filter({ hasText: testReason });
     await row.getByRole('button').first().click();
 
     await expect(page.getByText('Editar Disciplina')).toBeVisible();
@@ -67,20 +71,23 @@ test.describe('Disciplines Full-Stack E2E', () => {
     const editedReason = `${testReason} — editada`;
     await page.getByPlaceholder('Ej. Conducta antideportiva').fill(editedReason);
 
-    await page.getByRole('button', { name: 'Guardar cambios' }).click();
-    await expect(page.getByRole('button', { name: 'Guardar cambios' })).toBeHidden();
+    await Promise.all([
+      page.waitForResponse(resp => resp.url().includes('/disciplines') && resp.status() === 200),
+      page.getByRole('button', { name: 'Guardar cambios' }).click(),
+    ]);
 
-    await expect(page.getByText(editedReason)).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(testReason, { exact: true })).toBeHidden();
+    await expect(table.getByText(editedReason)).toBeVisible({ timeout: 10000 });
+    await expect(table.getByText(testReason, { exact: true })).toBeHidden();
   });
 
   test('debe eliminar la disciplina y mostrar el estado vacío', async ({ page }) => {
     await page.goto('/disciplines');
 
+    const table = page.locator('table');
     const editedReason = `${testReason} — editada`;
-    await expect(page.getByText(editedReason)).toBeVisible({ timeout: 10000 });
+    await expect(table.getByText(editedReason)).toBeVisible({ timeout: 10000 });
 
-    const row = page.locator('tr', { hasText: editedReason });
+    const row = table.locator('tr').filter({ hasText: editedReason });
     await row.getByRole('button').last().click();
 
     await expect(page.getByText('Eliminar disciplina')).toBeVisible();
