@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UpdateMemberUseCase } from './UpdateMemberUseCase.js';
-import { MemberRepository } from '../domain/members/MemberRepository.js';
-import { MemberValidator } from './domain/members/services/MemberValidator.js';
+import { MemberRepository } from '../../domain/members/MemberRepository.js';
+import { MemberValidator } from '../../domain/members/services/MemberValidator.js';
 import { UpdateMemberRequest, MemberDTO } from '@alentapp/shared';
 
 describe('UpdateMemberUseCase', () => {

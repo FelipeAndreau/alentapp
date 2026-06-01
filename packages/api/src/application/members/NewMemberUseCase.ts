@@ -1,5 +1,5 @@
-import { MemberRepository } from '../domain/members/MemberRepository.js';
-import { MemberValidator } from './domain/members/services/MemberValidator.js';
+import { MemberRepository } from '../../domain/members/MemberRepository.js';
+import { MemberValidator } from '../../domain/members/services/MemberValidator.js';
 import { MemberDTO, CreateMemberRequest } from '@alentapp/shared';
 
 export class CreateMemberUseCase {

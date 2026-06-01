@@ -1,9 +1,9 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { CreatePaymentUseCase } from '../application/payments/CreatePaymentUseCase.js';
-import { UpdatePaymentUseCase } from '../application/payments/UpdatePaymentUseCase.js';
-import { MarkPaymentAsPaidUseCase } from '../application/payments/MarkPaymentAsPaidUseCase.js';
-import { CancelPaymentUseCase } from '../application/payments/CancelPaymentUseCase.js';
-import { GetPaymentsUseCase } from '../application/payments/GetPaymentsUseCase.js';
+import { CreatePaymentUseCase } from '../../application/payments/CreatePaymentUseCase.js';
+import { UpdatePaymentUseCase } from '../../application/payments/UpdatePaymentUseCase.js';
+import { MarkPaymentAsPaidUseCase } from '../../application/payments/MarkPaymentAsPaidUseCase.js';
+import { CancelPaymentUseCase } from '../../application/payments/CancelPaymentUseCase.js';
+import { GetPaymentsUseCase } from '../../application/payments/GetPaymentsUseCase.js';
 import { CreatePaymentRequest, PaymentDTO } from '@alentapp/shared';
 import { 
     NotFoundError, 

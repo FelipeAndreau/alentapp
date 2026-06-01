@@ -1,15 +1,6 @@
-import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../../generated/client/client.js';
-import { MemberRepository } from '../domain/members/MemberRepository.js';
+import { prisma } from '../PrismaClient.js';
+import { MemberRepository } from '../../domain/members/MemberRepository.js';
 import { MemberDTO, CreateMemberRequest, UpdateMemberRequest } from '@alentapp/shared';
-
-if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL environment variable is not set');
-}
-
-const prisma = new PrismaClient({
-    adapter: new PrismaPg(process.env.DATABASE_URL),
-});
 
 type DBMember = {
     id: string;

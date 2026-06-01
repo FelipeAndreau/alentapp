@@ -12,5 +12,6 @@
                 "../shared/index.ts"
             ]
         }
-    }
+    },
+    "exclude": ["packages/web"]
 }

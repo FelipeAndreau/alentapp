@@ -1,4 +1,4 @@
-import { MemberRepository } from '../domain/members/MemberRepository.js';
+import { MemberRepository } from '../../domain/members/MemberRepository.js';
 import { MemberDTO } from '@alentapp/shared';
 
 export class GetMembersUseCase {

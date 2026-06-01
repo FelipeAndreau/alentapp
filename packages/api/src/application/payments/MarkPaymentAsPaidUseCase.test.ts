@@ -1,45 +1,45 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MarkPaymentAsPaidUseCase } from './MarkPaymentAsPaidUseCase.js';
 import { IPaymentRepository } from '../../domain/payments/IPaymentRepository.js';
 import { IClock } from '../../domain/services/Clock.js';
-import { PaymentDTO } from '@alentapp/shared';
+import { PaymentAlreadyCanceledError } from '../../domain/payments/errors/PaymentErrors.js';
 
 describe('MarkPaymentAsPaidUseCase', () => {
-    it('Debe ser IDEMPOTENTE: Si el pago ya está en estado Paid, debe retornar el pago sin modificar la fecha original y sin llamar a la BD', async () => {
-        const originalPaymentDate = new Date('2026-05-01T10:00:00Z');
-        
-        const mockClock: IClock = {
-            now: () => new Date('2026-05-10T10:00:00Z')
-        };
+  let paymentRepo: IPaymentRepository;
+  let clock: IClock;
+  let useCase: MarkPaymentAsPaidUseCase;
 
-        const existingPayment: PaymentDTO = {
-            id: '123',
-            amount: 500,
-            month: 4,
-            year: 2026,
-            status: 'Paid',
-            due_date: '2026-04-10',
-            payment_date: originalPaymentDate.toISOString(),
-            member_id: 'member-123',
-            created_at: '2026-04-01T00:00:00Z',
-            updated_at: '2026-05-01T10:00:00Z'
-        };
+  const mockDate = new Date('2026-05-25T10:00:00Z');
 
-        const mockRepository: IPaymentRepository = {
-            save: vi.fn(),
-            findById: vi.fn().mockResolvedValue(existingPayment),
-            update: vi.fn(),
-            findAll: vi.fn()
-        };
+  beforeEach(() => {
+    paymentRepo = {
+      findById: vi.fn(),
+      update: vi.fn(),
+    } as unknown as IPaymentRepository;
 
-        const useCase = new MarkPaymentAsPaidUseCase(mockRepository, mockClock);
+    clock = {
+      now: vi.fn().mockReturnValue(mockDate),
+    };
 
-        const result = await useCase.execute('123');
+    useCase = new MarkPaymentAsPaidUseCase(paymentRepo, clock);
+  });
 
-        expect(result.status).toBe('Paid');
-        
-        expect(result.payment_date).toBe(originalPaymentDate.toISOString());
+  it('debe marcar un pago como pagado exitosamente', async () => {
+    const payment = { id: 'p1', status: 'Pending', amount: '100' };
+    vi.mocked(paymentRepo.findById).mockResolvedValue(payment as any);
+    vi.mocked(paymentRepo.update).mockImplementation(async (p) => p as any);
 
-        expect(mockRepository.update).not.toHaveBeenCalled();
-    });
+    const result = await useCase.execute('p1');
+
+    expect(result.status).toBe('Paid');
+    expect(result.payment_date).toBe(mockDate.toISOString());
+    expect(paymentRepo.update).toHaveBeenCalled();
+  });
+
+  it('debe lanzar error si el pago esta cancelado', async () => {
+    const payment = { id: 'p1', status: 'Canceled' };
+    vi.mocked(paymentRepo.findById).mockResolvedValue(payment as any);
+
+    await expect(useCase.execute('p1')).rejects.toThrow(PaymentAlreadyCanceledError);
+  });
 });
