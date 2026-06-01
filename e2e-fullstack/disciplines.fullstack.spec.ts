@@ -1,29 +1,19 @@
 import { test, expect } from '@playwright/test';
 
-/**
- * Tests E2E Full-Stack para la vista de Disciplinas.
- * NO hay ningún mock de red. Playwright interactúa con:
- *   - El Frontend React en http://localhost:5174
- *   - La API Fastify real en http://localhost:3001
- *   - La base de datos PostgreSQL de test (alentapp_test_db)
- *
- * El global-setup se encarga de limpiar la DB antes de correr la suite,
- * por lo que cada test empieza desde un estado conocido y limpio.
- *
- * Como Discipline requiere un socio existente, se crea uno via API
- * en el beforeAll antes de correr los tests de UI.
- */
+const timestamp = Date.now();
+const testDni = `${timestamp.toString().slice(-8)}`;
+const testMemberName = `Socio E2E Disciplines ${timestamp}`;
+const testEmail = `e2e.disciplines${timestamp}@test.com`;
+const testReason = `Conducta antideportiva E2E ${timestamp}`;
 
 test.describe('Disciplines Full-Stack E2E', () => {
 
   test.beforeAll(async ({ request }) => {
-    // Creamos un socio real via API para usarlo como owner en los tests de disciplina.
-    // No lo hacemos por UI porque ese flujo ya está cubierto en members.fullstack.spec.ts.
     await request.post('http://localhost:3001/api/v1/socios', {
       data: {
-        name: 'Socio E2E Disciplines',
-        dni: '11223344',
-        email: 'e2e.disciplines@test.com',
+        name: testMemberName,
+        dni: testDni,
+        email: testEmail,
         birthdate: '1990-01-01',
         category: 'Pleno',
       },
@@ -31,11 +21,9 @@ test.describe('Disciplines Full-Stack E2E', () => {
   });
 
   test.afterAll(async ({ request }) => {
-    // Limpiamos el socio de prueba para no interferir con otros tests (ej. members).
-    // Primero obtenemos el ID real del socio creado (el DELETE requiere el UUID, no el DNI).
     const listRes = await request.get('http://localhost:3001/api/v1/socios');
     const members = await listRes.json();
-    const testMember = members.data?.find((m: any) => m.dni === '11223344');
+    const testMember = members.data?.find((m: any) => m.dni === testDni);
     if (testMember) {
       await request.delete(`http://localhost:3001/api/v1/socios/${testMember.id}`);
     }
@@ -49,68 +37,55 @@ test.describe('Disciplines Full-Stack E2E', () => {
   test('debe crear una disciplina real y mostrarla en la tabla', async ({ page }) => {
     await page.goto('/disciplines');
 
-    // Abrir modal de creación
     await page.locator('button:has-text("Nueva Disciplina")').click();
     await expect(page.getByText('Nueva Disciplina').last()).toBeVisible();
 
-    // Seleccionar socio en el Select de Chakra UI
     await page.getByRole('combobox', { name: /Socio/i }).click();
-    await page.getByRole('option', { name: /Socio E2E Disciplines/ }).click();
+    await page.getByRole('option', { name: new RegExp(testMemberName) }).click();
 
-    // Llenar motivo
-    await page.getByPlaceholder('Ej. Conducta antideportiva').fill('Conducta antideportiva E2E');
+    await page.getByPlaceholder('Ej. Conducta antideportiva').fill(testReason);
 
-    // Fechas de inicio y fin
     await page.getByLabel(/Fecha de inicio/i).fill('2026-06-01');
     await page.getByLabel(/Fecha de fin/i).fill('2026-08-01');
 
-    // Registrar
     await page.getByRole('button', { name: 'Registrar' }).click();
 
-    // Verificar que aparece en la tabla
-    await expect(page.getByText('Conducta antideportiva E2E')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(/Socio E2E Disciplines/)).toBeVisible();
+    await expect(page.getByText(testReason)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(new RegExp(testMemberName))).toBeVisible();
   });
 
   test('debe editar la disciplina y ver el cambio en la tabla', async ({ page }) => {
     await page.goto('/disciplines');
 
-    // Esperar que la disciplina del test anterior esté en la tabla
-    await expect(page.getByText('Conducta antideportiva E2E')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(testReason)).toBeVisible({ timeout: 10000 });
 
-    // Clic en el botón de editar (ícono de lápiz) de la fila correspondiente
-    const row = page.locator('tr', { hasText: 'Conducta antideportiva E2E' });
+    const row = page.locator('tr', { hasText: testReason });
     await row.getByRole('button').first().click();
 
     await expect(page.getByText('Editar Disciplina')).toBeVisible();
 
-    // Cambiar el motivo
-    await page.getByPlaceholder('Ej. Conducta antideportiva').fill('Conducta antideportiva E2E — editada');
+    const editedReason = `${testReason} — editada`;
+    await page.getByPlaceholder('Ej. Conducta antideportiva').fill(editedReason);
 
-    // Guardar cambios
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
     await expect(page.getByRole('button', { name: 'Guardar cambios' })).toBeHidden();
 
-    // Verificar el cambio en la tabla
-    await expect(page.getByText('Conducta antideportiva E2E — editada')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('Conducta antideportiva E2E', { exact: true })).toBeHidden();
+    await expect(page.getByText(editedReason)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(testReason, { exact: true })).toBeHidden();
   });
 
   test('debe eliminar la disciplina y mostrar el estado vacío', async ({ page }) => {
     await page.goto('/disciplines');
 
-    // La disciplina editada debería seguir en la tabla
-    await expect(page.getByText('Conducta antideportiva E2E — editada')).toBeVisible({ timeout: 10000 });
+    const editedReason = `${testReason} — editada`;
+    await expect(page.getByText(editedReason)).toBeVisible({ timeout: 10000 });
 
-    // Clic en el botón de eliminar (ícono de papelera, segundo botón de la fila)
-    const row = page.locator('tr', { hasText: 'Conducta antideportiva E2E — editada' });
+    const row = page.locator('tr', { hasText: editedReason });
     await row.getByRole('button').last().click();
 
-    // Confirmar en el dialog de confirmación
     await expect(page.getByText('Eliminar disciplina')).toBeVisible();
     await page.getByRole('button', { name: 'Eliminar' }).click();
 
-    // La tabla debe quedar vacía
     await expect(page.getByText('No hay disciplinas registradas.')).toBeVisible({ timeout: 10000 });
   });
 
