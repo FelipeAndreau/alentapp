@@ -1,3 +1,6 @@
+// PRIMERO: inicializar OpenTelemetry (antes de cualquier otro import)
+import './infrastructure/telemetry.js';
+
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 
@@ -21,6 +24,8 @@ import {
     ValidationError,
     ConflictError,
 } from './domain/payments/errors/PaymentErrors.js';
+
+import { shutdownTelemetry } from './infrastructure/telemetry.js';
 
 // APLICACIÓN (USE CASES)
 import { CreateMemberUseCase } from './application/members/NewMemberUseCase.js';
@@ -325,6 +330,8 @@ if (process.argv[1] && process.argv[1].endsWith('app.ts')) {
 
     ['SIGINT', 'SIGTERM'].forEach((signal) => {
         process.on(signal, async () => {
+            server.log.info(`Received ${signal}, shutting down gracefully...`);
+            await shutdownTelemetry();
             await server.close();
             process.exit(0);
         });
