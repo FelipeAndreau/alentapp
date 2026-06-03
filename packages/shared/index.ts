@@ -151,3 +151,32 @@ export interface SportResponse {
 export interface SportsResponse {
     data: SportDTO[];
 }
+
+// ==========================================
+// Enrollment (Inscripciones)
+// ==========================================
+export interface EnrollmentDTO {
+    id: string;
+    member_id: string;
+    sport_id: string;
+    enrollment_date: string; // ISO 8601 DateTime
+    is_active: boolean;
+    deleted_at: string | null;
+}
+
+export interface CreateEnrollmentRequest {
+    member_id: string;
+    sport_id: string;
+}
+
+export interface UpdateEnrollmentRequest {
+    is_active?: boolean;
+}
+
+export interface EnrollmentResponse {
+    data: EnrollmentDTO;
+}
+
+export interface EnrollmentsResponse {
+    data: EnrollmentDTO[];
+}
