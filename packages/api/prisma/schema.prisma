@@ -107,12 +107,14 @@ model Sport {
 }
 
 model Enrollment {
-    id         String   @id @default(uuid())
-    member_id  String
-    sport_id   String
-    member     Member   @relation(fields: [member_id], references: [id])
-    sport      Sport    @relation(fields: [sport_id], references: [id])
-    created_at DateTime @default(now())
+    id              String    @id @default(uuid())
+    member_id       String
+    sport_id        String
+    enrollment_date DateTime  @default(now())
+    is_active       Boolean   @default(true)
+    deleted_at      DateTime?
+    member          Member    @relation(fields: [member_id], references: [id])
+    sport           Sport     @relation(fields: [sport_id], references: [id])
 
     @@map("enrollments")
 }
