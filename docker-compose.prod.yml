@@ -45,7 +45,6 @@ services:
       - OTEL_SERVICE_NAME=alentapp-api
     ports:
       - '${API_PORT:-3000}:3000'
-      - '${OTEL_PORT:-9464}:9464'
     networks:
       - alentapp-prod-net
     depends_on:
