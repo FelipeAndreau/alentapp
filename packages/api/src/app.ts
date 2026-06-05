@@ -79,7 +79,10 @@ export function buildApp() {
     });
 
     server.register(cors, {
-        origin: true,
+        origin:
+            process.env.NODE_ENV === 'production'
+                ? ['http://localhost', 'http://localhost:80']
+                : true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
