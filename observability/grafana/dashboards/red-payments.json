@@ -1,0 +1,100 @@
+{
+  "id": null,
+  "uid": "red-payments",
+  "title": "RED — Alentapp Payments",
+  "tags": ["payments", "red", "observability"],
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "version": 1,
+  "refresh": "5s",
+  "annotations": {
+    "list": []
+  },
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Requests por segundo",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_duration_count[1m])) by (http_method, net_host_port)",
+          "legendFormat": "{{http_method}} :{{net_host_port}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2,
+      "title": "Tasa de error (%)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_duration_count{http_status_code=~\"4..|5..\"}[1m])) / sum(rate(http_server_duration_count[1m])) * 100",
+          "legendFormat": "Error %"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "id": 3,
+      "title": "Latencia p95 / p99",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_bucket[5m])) by (le))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_server_duration_bucket[5m])) by (le))",
+          "legendFormat": "p99"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+    },
+    {
+      "id": 4,
+      "title": "Por código de estado",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (http_status_code) (rate(http_server_duration_count[5m]))",
+          "legendFormat": "{{http_status_code}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+    },
+    {
+      "id": 5,
+      "title": "Memoria del proceso (MB)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        {
+          "expr": "process_memory_usage / 1024 / 1024",
+          "legendFormat": "Heap Used (MB)"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }
+    },
+    {
+      "id": 6,
+      "title": "Endpoints más lentos (top 5)",
+      "type": "bargauge",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        {
+          "expr": "topk(5, avg by (net_host_port) (rate(http_server_duration_sum[5m])) / avg by (net_host_port) (rate(http_server_duration_count[5m])))",
+          "legendFormat": "Port :{{net_host_port}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 }
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: alentapp-db-prod
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-alentapp_db}
+    volumes:
+      - pgdata-prod:/var/lib/postgresql/data
+    networks:
+      - alentapp-prod-net
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 3
+
+  api:
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile.prod
+    container_name: alentapp-api-prod
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - OTEL_SERVICE_NAME=alentapp-api
+    ports:
+      - '${API_PORT:-3000}:3000'
+    networks:
+      - alentapp-prod-net
+    depends_on:
+      db:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 3
+
+  web:
+    build:
+      context: .
+      dockerfile: packages/web/Dockerfile.prod
+    container_name: alentapp-web-prod
+    restart: unless-stopped
+    ports:
+      - '${WEB_PORT:-80}:80'
+    networks:
+      - alentapp-prod-net
+    depends_on:
+      - api
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 3
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: alentapp-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - '${PROMETHEUS_PORT:-9090}:9090'
+    networks:
+      - alentapp-prod-net
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    healthcheck:
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:9090/-/healthy']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 3
+
+  grafana:
+    image: grafana/grafana:10.4.3
+    container_name: alentapp-grafana
+    restart: unless-stopped
+    volumes:
+      - ./observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - '${GRAFANA_PORT:-3001}:3000'
+    networks:
+      - alentapp-prod-net
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL:-http://localhost:3001}
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -sf http://localhost:3000/api/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 3
+
+volumes:
+  pgdata-prod:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  alentapp-prod-net:
+    driver: bridge

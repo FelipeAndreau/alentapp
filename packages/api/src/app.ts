@@ -1,3 +1,6 @@
+// PRIMERO: inicializar OpenTelemetry (antes de cualquier otro import)
+import './infrastructure/telemetry.js';
+
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 
@@ -23,6 +26,8 @@ import {
     ValidationError,
     ConflictError,
 } from './domain/payments/errors/PaymentErrors.js';
+
+import { shutdownTelemetry } from './infrastructure/telemetry.js';
 
 // APLICACIÓN (USE CASES)
 import { CreateMemberUseCase } from './application/members/NewMemberUseCase.js';
@@ -82,7 +87,10 @@ export function buildApp() {
     });
 
     server.register(cors, {
-        origin: true,
+        origin:
+            process.env.NODE_ENV === 'production'
+                ? ['http://localhost', 'http://localhost:80']
+                : true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
@@ -382,6 +390,8 @@ if (process.argv[1] && process.argv[1].endsWith('app.ts')) {
 
     ['SIGINT', 'SIGTERM'].forEach((signal) => {
         process.on(signal, async () => {
+            server.log.info(`Received ${signal}, shutting down gracefully...`);
+            await shutdownTelemetry();
             await server.close();
             process.exit(0);
         });
