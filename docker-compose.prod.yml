@@ -115,6 +115,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus/rules.yml:/etc/prometheus/rules.yml:ro
       - prometheus-data:/prometheus
     ports:
       - '${PROMETHEUS_PORT:-9090}:9090'
