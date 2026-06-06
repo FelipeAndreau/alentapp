@@ -42,6 +42,11 @@ export function SportsView() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedSport, setSelectedSport] = useState<SportDTO | null>(null);
 
+    // Estados para el dialog de confirmación de baja
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [deletingSport, setDeletingSport] = useState<SportDTO | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const [createForm, setCreateForm] = useState<CreateSportRequest>({
         name: '',
         description: '',
@@ -90,6 +95,11 @@ export function SportsView() {
             max_capacity: sport.max_capacity,
         });
         setIsEditOpen(true);
+    };
+
+    const openDeleteModal = (sport: SportDTO) => {
+        setDeletingSport(sport);
+        setIsDeleteOpen(true);
     };
 
     const handleCreate = async (e: React.FormEvent) => {
@@ -146,17 +156,16 @@ export function SportsView() {
         }
     };
 
-    const handleDelete = async (sport: SportDTO) => {
-        const confirmed = window.confirm(
-            `¿Estás seguro que querés dar de baja "${sport.name}"? Esta acción no se puede deshacer.`,
-        );
-        if (!confirmed) return;
+    const handleDelete = async () => {
+        if (!deletingSport) return;
+        setIsDeleting(true);
         try {
-            await sportsService.delete(sport.id);
+            await sportsService.delete(deletingSport.id);
             toaster.create({
                 title: 'Deporte dado de baja con éxito',
                 type: 'success',
             });
+            setIsDeleteOpen(false);
             fetchSports();
         } catch (err: any) {
             toaster.create({
@@ -164,11 +173,47 @@ export function SportsView() {
                 description: err.message,
                 type: 'error',
             });
+        } finally {
+            setIsDeleting(false);
+            setDeletingSport(null);
         }
     };
 
     return (
         <>
+            {/* Dialog de confirmación de baja */}
+            <DialogRoot
+                open={isDeleteOpen}
+                onOpenChange={(e) => setIsDeleteOpen(e.open)}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Dar de baja deporte</DialogTitle>
+                    </DialogHeader>
+                    <DialogBody>
+                        <Text>
+                            ¿Estás seguro que querés dar de baja{' '}
+                            <strong>{deletingSport?.name}</strong>? Esta acción
+                            no se puede deshacer.
+                        </Text>
+                    </DialogBody>
+                    <DialogFooter>
+                        <DialogActionTrigger asChild>
+                            <Button variant="outline">Cancelar</Button>
+                        </DialogActionTrigger>
+                        <Button
+                            colorPalette="red"
+                            loading={isDeleting}
+                            onClick={handleDelete}
+                        >
+                            Dar de baja
+                        </Button>
+                    </DialogFooter>
+                    <DialogCloseTrigger />
+                </DialogContent>
+            </DialogRoot>
+
+            {/* Dialog de creación */}
             <DialogRoot
                 open={isCreateOpen}
                 onOpenChange={(e) => setIsCreateOpen(e.open)}
@@ -279,6 +324,7 @@ export function SportsView() {
                 </DialogContent>
             </DialogRoot>
 
+            {/* Dialog de edición */}
             <DialogRoot
                 open={isEditOpen}
                 onOpenChange={(e) => setIsEditOpen(e.open)}
@@ -476,7 +522,7 @@ export function SportsView() {
                                                     variant="ghost"
                                                     colorPalette="red"
                                                     onClick={() =>
-                                                        handleDelete(sport)
+                                                        openDeleteModal(sport)
                                                     }
                                                 >
                                                     <LuTrash2 />

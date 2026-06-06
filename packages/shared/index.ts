@@ -5,21 +5,21 @@ export type MemberCategory = 'Pleno' | 'Cadete' | 'Honorario';
 export type MemberStatus = 'Activo' | 'Moroso' | 'Suspendido';
 
 export interface MemberDTO {
-    id: string; // UUID
+    id: string;
     dni: string;
     name: string;
     email: string;
-    birthdate: string; // ISO Date String (YYYY-MM-DD)
+    birthdate: string;
     category: MemberCategory;
     status: MemberStatus;
-    created_at: string; // ISO Date String
+    created_at: string;
 }
 
 export interface CreateMemberRequest {
     dni: string;
     name: string;
     email: string;
-    birthdate: string; // ISO Date String (YYYY-MM-DD)
+    birthdate: string;
     category: MemberCategory;
 }
 
@@ -27,7 +27,7 @@ export interface UpdateMemberRequest {
     dni?: string;
     name?: string;
     email?: string;
-    birthdate?: string; // ISO Date String (YYYY-MM-DD)
+    birthdate?: string;
     category?: MemberCategory;
     status?: MemberStatus;
 }
@@ -38,24 +38,24 @@ export interface UpdateMemberRequest {
 export type PaymentStatus = 'Pending' | 'Paid' | 'Canceled';
 
 export interface PaymentDTO {
-    id: string; // UUID
+    id: string;
     amount: string;
     month: number;
     year: number;
     status: PaymentStatus;
-    due_date: string; // ISO Date String (YYYY-MM-DD)
-    payment_date: string | null; // ISO DateTime String
-    member_id: string; // UUID
-    created_at: string; // ISO DateTime String
-    updated_at: string; // ISO DateTime String
+    due_date: string;
+    payment_date: string | null;
+    member_id: string;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface CreatePaymentRequest {
     amount: string;
     month: number;
     year: number;
-    due_date: string; // ISO Date String (YYYY-MM-DD)
-    member_id: string; // UUID
+    due_date: string;
+    member_id: string;
 }
 
 export interface PaymentResponse {
@@ -150,4 +150,33 @@ export interface SportResponse {
 
 export interface SportsResponse {
     data: SportDTO[];
+}
+
+// ==========================================
+// Enrollment (Inscripciones)
+// ==========================================
+export interface EnrollmentDTO {
+    id: string;
+    member_id: string;
+    sport_id: string;
+    enrollment_date: string;
+    is_active: boolean;
+    deleted_at: string | null;
+}
+
+export interface CreateEnrollmentRequest {
+    member_id: string;
+    sport_id: string;
+}
+
+export interface UpdateEnrollmentRequest {
+    is_active?: boolean;
+}
+
+export interface EnrollmentResponse {
+    data: EnrollmentDTO;
+}
+
+export interface EnrollmentsResponse {
+    data: EnrollmentDTO[];
 }
