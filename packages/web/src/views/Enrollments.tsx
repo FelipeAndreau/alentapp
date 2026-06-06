@@ -19,21 +19,15 @@ import {
     LuPowerOff,
     LuPower,
 } from 'react-icons/lu';
-
-// Importa los tipos del shared — los mismos que usa el backend
 import type {
     EnrollmentDTO,
     CreateEnrollmentRequest,
     MemberDTO,
     SportDTO,
 } from '@alentapp/shared';
-
-// Importa los servicios de las 3 entidades que necesita
 import { enrollmentsService } from '../services/enrollments';
 import { membersService } from '../services/members';
 import { sportsService } from '../services/sports';
-
-// Importa los componentes de Chakra UI para el modal
 import {
     DialogRoot,
     DialogContent,
@@ -48,28 +42,32 @@ import { Field } from '../components/ui/field';
 import { toaster } from '../components/ui/toaster';
 
 export function EnrollmentsView() {
-    // Lista de inscripciones activas traídas de la API
     const [enrollments, setEnrollments] = useState<EnrollmentDTO[]>([]);
-
-    // Listas de socios y deportes para mostrar nombres en lugar de IDs
     const [members, setMembers] = useState<MemberDTO[]>([]);
     const [sports, setSports] = useState<SportDTO[]>([]);
-
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Controla si el modal de creación está abierto
+    // Estados para el modal de creación
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Estado del formulario de creación — solo member_id y sport_id
     const [createForm, setCreateForm] = useState<CreateEnrollmentRequest>({
         member_id: '',
         sport_id: '',
     });
 
-    // Trae inscripciones, socios y deportes en paralelo
-    // Promise.all ejecuta los 3 fetches al mismo tiempo para no esperar uno por uno
+    // Estados para el dialog de toggle activa/inactiva
+    const [isToggleOpen, setIsToggleOpen] = useState(false);
+    const [togglingEnrollment, setTogglingEnrollment] =
+        useState<EnrollmentDTO | null>(null);
+    const [isToggling, setIsToggling] = useState(false);
+
+    // Estados para el dialog de baja lógica
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [deletingEnrollment, setDeletingEnrollment] =
+        useState<EnrollmentDTO | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const fetchAll = async () => {
         try {
             setLoading(true);
@@ -90,13 +88,10 @@ export function EnrollmentsView() {
         }
     };
 
-    // Se ejecuta una sola vez cuando el componente carga
     useEffect(() => {
         fetchAll();
     }, []);
 
-    // Helpers para buscar el nombre del socio y el deporte por ID
-    // En lugar de mostrar "abc-123" muestra "Juan Pérez (DNI: 12345678)"
     const getMemberLabel = (memberId: string) => {
         const member = members.find((m) => m.id === memberId);
         return member ? `${member.name} (DNI: ${member.dni})` : memberId;
@@ -112,10 +107,18 @@ export function EnrollmentsView() {
         setIsCreateOpen(true);
     };
 
-    // Crea una nueva inscripción
+    const openToggleModal = (enrollment: EnrollmentDTO) => {
+        setTogglingEnrollment(enrollment);
+        setIsToggleOpen(true);
+    };
+
+    const openDeleteModal = (enrollment: EnrollmentDTO) => {
+        setDeletingEnrollment(enrollment);
+        setIsDeleteOpen(true);
+    };
+
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
-
         if (!createForm.member_id || !createForm.sport_id) {
             toaster.create({
                 title: 'Completá todos los campos requeridos',
@@ -123,7 +126,6 @@ export function EnrollmentsView() {
             });
             return;
         }
-
         setIsSubmitting(true);
         try {
             await enrollmentsService.create(createForm);
@@ -144,21 +146,18 @@ export function EnrollmentsView() {
         }
     };
 
-    // Activa o desactiva la inscripción (toggle de is_active)
-    const handleToggleActive = async (enrollment: EnrollmentDTO) => {
-        const action = enrollment.is_active ? 'desactivar' : 'activar';
-        const confirmed = window.confirm(
-            `¿Estás seguro que querés ${action} esta inscripción?`,
-        );
-        if (!confirmed) return;
+    const handleToggleActive = async () => {
+        if (!togglingEnrollment) return;
+        setIsToggling(true);
         try {
-            await enrollmentsService.update(enrollment.id, {
-                is_active: !enrollment.is_active,
+            await enrollmentsService.update(togglingEnrollment.id, {
+                is_active: !togglingEnrollment.is_active,
             });
             toaster.create({
-                title: `Inscripción ${enrollment.is_active ? 'desactivada' : 'activada'} con éxito`,
+                title: `Inscripción ${togglingEnrollment.is_active ? 'desactivada' : 'activada'} con éxito`,
                 type: 'success',
             });
+            setIsToggleOpen(false);
             fetchAll();
         } catch (err: any) {
             toaster.create({
@@ -166,23 +165,22 @@ export function EnrollmentsView() {
                 description: err.message,
                 type: 'error',
             });
+        } finally {
+            setIsToggling(false);
+            setTogglingEnrollment(null);
         }
     };
 
-    // Soft delete — da de baja la inscripción definitivamente
-    const handleDelete = async (enrollment: EnrollmentDTO) => {
-        const memberLabel = getMemberLabel(enrollment.member_id);
-        const sportName = getSportName(enrollment.sport_id);
-        const confirmed = window.confirm(
-            `¿Estás seguro que querés dar de baja la inscripción de "${memberLabel}" en "${sportName}"? Esta acción no se puede deshacer.`,
-        );
-        if (!confirmed) return;
+    const handleDelete = async () => {
+        if (!deletingEnrollment) return;
+        setIsDeleting(true);
         try {
-            await enrollmentsService.delete(enrollment.id);
+            await enrollmentsService.delete(deletingEnrollment.id);
             toaster.create({
                 title: 'Inscripción dada de baja con éxito',
                 type: 'success',
             });
+            setIsDeleteOpen(false);
             fetchAll();
         } catch (err: any) {
             toaster.create({
@@ -190,11 +188,117 @@ export function EnrollmentsView() {
                 description: err.message,
                 type: 'error',
             });
+        } finally {
+            setIsDeleting(false);
+            setDeletingEnrollment(null);
         }
     };
 
     return (
         <>
+            {/* Dialog de confirmación de toggle activa/inactiva */}
+            <DialogRoot
+                open={isToggleOpen}
+                onOpenChange={(e) => setIsToggleOpen(e.open)}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>
+                            {togglingEnrollment?.is_active
+                                ? 'Desactivar inscripción'
+                                : 'Activar inscripción'}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <DialogBody>
+                        <Text>
+                            ¿Estás seguro que querés{' '}
+                            {togglingEnrollment?.is_active
+                                ? 'desactivar'
+                                : 'activar'}{' '}
+                            la inscripción de{' '}
+                            <strong>
+                                {togglingEnrollment
+                                    ? getMemberLabel(
+                                          togglingEnrollment.member_id,
+                                      )
+                                    : ''}
+                            </strong>{' '}
+                            en{' '}
+                            <strong>
+                                {togglingEnrollment
+                                    ? getSportName(togglingEnrollment.sport_id)
+                                    : ''}
+                            </strong>
+                            ?
+                        </Text>
+                    </DialogBody>
+                    <DialogFooter>
+                        <DialogActionTrigger asChild>
+                            <Button variant="outline">Cancelar</Button>
+                        </DialogActionTrigger>
+                        <Button
+                            colorPalette={
+                                togglingEnrollment?.is_active
+                                    ? 'orange'
+                                    : 'green'
+                            }
+                            loading={isToggling}
+                            onClick={handleToggleActive}
+                        >
+                            {togglingEnrollment?.is_active
+                                ? 'Desactivar'
+                                : 'Activar'}
+                        </Button>
+                    </DialogFooter>
+                    <DialogCloseTrigger />
+                </DialogContent>
+            </DialogRoot>
+
+            {/* Dialog de confirmación de baja lógica */}
+            <DialogRoot
+                open={isDeleteOpen}
+                onOpenChange={(e) => setIsDeleteOpen(e.open)}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Dar de baja inscripción</DialogTitle>
+                    </DialogHeader>
+                    <DialogBody>
+                        <Text>
+                            ¿Estás seguro que querés dar de baja la inscripción
+                            de{' '}
+                            <strong>
+                                {deletingEnrollment
+                                    ? getMemberLabel(
+                                          deletingEnrollment.member_id,
+                                      )
+                                    : ''}
+                            </strong>{' '}
+                            en{' '}
+                            <strong>
+                                {deletingEnrollment
+                                    ? getSportName(deletingEnrollment.sport_id)
+                                    : ''}
+                            </strong>
+                            ? Esta acción no se puede deshacer.
+                        </Text>
+                    </DialogBody>
+                    <DialogFooter>
+                        <DialogActionTrigger asChild>
+                            <Button variant="outline">Cancelar</Button>
+                        </DialogActionTrigger>
+                        <Button
+                            colorPalette="red"
+                            loading={isDeleting}
+                            onClick={handleDelete}
+                        >
+                            Dar de baja
+                        </Button>
+                    </DialogFooter>
+                    <DialogCloseTrigger />
+                </DialogContent>
+            </DialogRoot>
+
             {/* Modal de creación */}
             <DialogRoot
                 open={isCreateOpen}
@@ -207,7 +311,6 @@ export function EnrollmentsView() {
                         </DialogHeader>
                         <DialogBody>
                             <Stack gap="4">
-                                {/* Select de socios — muestra nombre + DNI */}
                                 <Field label="Socio" required>
                                     <select
                                         value={createForm.member_id}
@@ -228,7 +331,6 @@ export function EnrollmentsView() {
                                         <option value="">
                                             Seleccioná un socio
                                         </option>
-                                        {/* Solo muestra socios con status Activo */}
                                         {members
                                             .filter(
                                                 (m) => m.status === 'Activo',
@@ -244,8 +346,6 @@ export function EnrollmentsView() {
                                             ))}
                                     </select>
                                 </Field>
-
-                                {/* Select de deportes — muestra nombre */}
                                 <Field label="Deporte" required>
                                     <select
                                         value={createForm.sport_id}
@@ -266,7 +366,6 @@ export function EnrollmentsView() {
                                         <option value="">
                                             Seleccioná un deporte
                                         </option>
-                                        {/* Solo muestra deportes activos (deleted_at = null) */}
                                         {sports
                                             .filter(
                                                 (s) => s.deleted_at === null,
@@ -395,23 +494,19 @@ export function EnrollmentsView() {
                             <Table.Body>
                                 {enrollments.map((enrollment) => (
                                     <Table.Row key={enrollment.id}>
-                                        {/* Muestra nombre + DNI del socio en lugar del UUID */}
                                         <Table.Cell fontWeight="medium">
                                             {getMemberLabel(
                                                 enrollment.member_id,
                                             )}
                                         </Table.Cell>
-                                        {/* Muestra nombre del deporte en lugar del UUID */}
                                         <Table.Cell>
                                             {getSportName(enrollment.sport_id)}
                                         </Table.Cell>
-                                        {/* Convierte ISO string a fecha legible */}
                                         <Table.Cell color="fg.muted">
                                             {new Date(
                                                 enrollment.enrollment_date,
                                             ).toLocaleDateString('es-AR')}
                                         </Table.Cell>
-                                        {/* Badge visual según estado */}
                                         <Table.Cell>
                                             <Badge
                                                 colorPalette={
@@ -427,7 +522,6 @@ export function EnrollmentsView() {
                                         </Table.Cell>
                                         <Table.Cell>
                                             <HStack gap="2">
-                                                {/* Botón toggle activa/desactiva */}
                                                 <Button
                                                     size="sm"
                                                     variant="ghost"
@@ -437,7 +531,7 @@ export function EnrollmentsView() {
                                                             : 'green'
                                                     }
                                                     onClick={() =>
-                                                        handleToggleActive(
+                                                        openToggleModal(
                                                             enrollment,
                                                         )
                                                     }
@@ -448,13 +542,14 @@ export function EnrollmentsView() {
                                                         <LuPower />
                                                     )}
                                                 </Button>
-                                                {/* Botón de baja lógica */}
                                                 <Button
                                                     size="sm"
                                                     variant="ghost"
                                                     colorPalette="red"
                                                     onClick={() =>
-                                                        handleDelete(enrollment)
+                                                        openDeleteModal(
+                                                            enrollment,
+                                                        )
                                                     }
                                                 >
                                                     <LuTrash2 />
