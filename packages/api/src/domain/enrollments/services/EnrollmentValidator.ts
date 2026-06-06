@@ -8,10 +8,6 @@ import {
     EnrollmentSportDeletedError,
     EnrollmentValidationError,
 } from '../errors/EnrollmentErrors.js';
-import {
-    EnrollmentNotFoundError,
-    EnrollmentAlreadyDeletedError,
-} from '../errors/EnrollmentErrors.js';
 import { CreateEnrollmentRequest } from '@alentapp/shared';
 
 export class EnrollmentValidator {
@@ -33,7 +29,12 @@ export class EnrollmentValidator {
             );
         }
 
-        const member = await this.memberRepository.findById(request.member_id);
+        // Busca socio y deporte en paralelo — son independientes entre sí
+        const [member, sport] = await Promise.all([
+            this.memberRepository.findById(request.member_id),
+            this.sportRepository.findById(request.sport_id),
+        ]);
+
         if (!member) {
             throw new EnrollmentValidationError('Socio no encontrado');
         }
@@ -41,7 +42,6 @@ export class EnrollmentValidator {
             throw new EnrollmentMemberInactiveError();
         }
 
-        const sport = await this.sportRepository.findById(request.sport_id);
         if (!sport) {
             throw new EnrollmentValidationError('Deporte no encontrado');
         }
@@ -49,6 +49,7 @@ export class EnrollmentValidator {
             throw new EnrollmentSportDeletedError();
         }
 
+        // Estas validaciones son secuenciales porque dependen de que sport exista
         const existing =
             await this.enrollmentRepository.findActiveByMemberAndSport(
                 request.member_id,
@@ -64,16 +65,6 @@ export class EnrollmentValidator {
             );
         if (activeCount >= sport.max_capacity) {
             throw new EnrollmentCapacityError();
-        }
-    }
-
-    async validateExists(id: string): Promise<void> {
-        const enrollment = await this.enrollmentRepository.findById(id);
-        if (!enrollment) {
-            throw new EnrollmentNotFoundError();
-        }
-        if (enrollment.deleted_at !== null) {
-            throw new EnrollmentAlreadyDeletedError();
         }
     }
 }
