@@ -16,10 +16,10 @@ import {
 export class EnrollmentController {
     // Recibe los 4 casos de uso por inyección de dependencias
     constructor(
-        private createEnrollmentUseCase: CreateEnrollmentUseCase,
-        private getEnrollmentsUseCase: GetEnrollmentsUseCase,
-        private updateEnrollmentUseCase: UpdateEnrollmentUseCase,
-        private deleteEnrollmentUseCase: DeleteEnrollmentUseCase,
+        private readonly createEnrollmentUseCase: CreateEnrollmentUseCase,
+        private readonly getEnrollmentsUseCase: GetEnrollmentsUseCase,
+        private readonly updateEnrollmentUseCase: UpdateEnrollmentUseCase,
+        private readonly deleteEnrollmentUseCase: DeleteEnrollmentUseCase,
     ) {}
 
     // GET /api/v1/enrollments
