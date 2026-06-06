@@ -10,8 +10,6 @@ RUN npm ci --omit=dev --ignore-scripts
 # Stage 2: Build TypeScript
 FROM node:22-alpine AS build
 WORKDIR /app
-# Install wget for healthcheck (needed in final stage too)
-RUN apk add --no-cache wget
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Generate Prisma client

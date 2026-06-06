@@ -10,12 +10,14 @@ import { PostgresPaymentRepository } from './infrastructure/payments/PostgresPay
 import { PostgresLockerRepository } from './infrastructure/lockers/PostgresLockerRepository.js';
 import { PostgresDisciplineRepository } from './infrastructure/disciplines/PostgresDisciplineRepository.js';
 import { PostgresSportRepository } from './infrastructure/sports/PostgresSportRepository.js';
+import { PostgresEnrollmentRepository } from './infrastructure/enrollments/PostgresEnrollmentRepository.js';
 
 // DOMINIO (VALIDADORES Y SERVICIOS)
 import { MemberValidator } from './domain/members/services/MemberValidator.js';
 import { DisciplineValidator } from './domain/disciplines/services/DisciplineValidator.js';
 import { LockerValidator } from './domain/lockers/services/LockerValidator.js';
 import { SportValidator } from './domain/sports/services/SportValidator.js';
+import { EnrollmentValidator } from './domain/enrollments/services/EnrollmentValidator.js';
 import { SystemClock } from './domain/services/Clock.js';
 
 // ERRORES DE DOMINIO PARA EL HANDLER GLOBAL
@@ -54,12 +56,18 @@ import { GetSportsUseCase } from './application/sports/GetSportsUseCase.js';
 import { UpdateSportUseCase } from './application/sports/UpdateSportUseCase.js';
 import { DeleteSportUseCase } from './application/sports/DeleteSportUseCase.js';
 
+import { CreateEnrollmentUseCase } from './application/enrollments/CreateEnrollmentUseCase.js';
+import { GetEnrollmentsUseCase } from './application/enrollments/GetEnrollmentsUseCase.js';
+import { UpdateEnrollmentUseCase } from './application/enrollments/UpdateEnrollmentUseCase.js';
+import { DeleteEnrollmentUseCase } from './application/enrollments/DeleteEnrollmentUseCase.js';
+
 // DELIVERY (CONTROLADORES)
 import { MemberController } from './delivery/members/MemberController.js';
 import { PaymentController } from './delivery/payments/PaymentController.js';
 import { LockerController } from './delivery/lockers/LockerController.js';
 import { DisciplineController } from './delivery/disciplines/DisciplineController.js';
 import { SportController } from './delivery/sports/SportController.js';
+import { EnrollmentController } from './delivery/enrollments/EnrollmentController.js';
 
 export function buildApp() {
     const server = Fastify({
@@ -196,15 +204,46 @@ export function buildApp() {
 
     // 6. INICIALIZACIÓN DE DEPORTES
     const sportValidator = new SportValidator(sportRepo);
-    const createSportUseCase = new CreateSportUseCase(sportRepo, sportValidator);
+    const createSportUseCase = new CreateSportUseCase(
+        sportRepo,
+        sportValidator,
+    );
     const getSportsUseCase = new GetSportsUseCase(sportRepo);
-    const updateSportUseCase = new UpdateSportUseCase(sportRepo, sportValidator);
+    const updateSportUseCase = new UpdateSportUseCase(
+        sportRepo,
+        sportValidator,
+    );
     const deleteSportUseCase = new DeleteSportUseCase(sportRepo);
     const sportController = new SportController(
         createSportUseCase,
         getSportsUseCase,
         updateSportUseCase,
         deleteSportUseCase,
+    );
+
+    // 7. INICIALIZACIÓN DE INSCRIPCIONES
+
+    // El validator necesita los 3 repositorios para sus validaciones de negocio
+    const enrollmentRepo = new PostgresEnrollmentRepository();
+
+    const enrollmentValidator = new EnrollmentValidator(
+        enrollmentRepo, // para verificar duplicados y cupo
+        memberRepo, // para verificar que el socio exista y esté activo
+        sportRepo, // para verificar que el deporte exista y no esté dado de baja
+    );
+    const createEnrollmentUseCase = new CreateEnrollmentUseCase(
+        enrollmentRepo,
+        enrollmentValidator,
+    );
+    const getEnrollmentsUseCase = new GetEnrollmentsUseCase(enrollmentRepo);
+    const updateEnrollmentUseCase = new UpdateEnrollmentUseCase(enrollmentRepo);
+    const deleteEnrollmentUseCase = new DeleteEnrollmentUseCase(enrollmentRepo);
+
+    const enrollmentController = new EnrollmentController(
+        createEnrollmentUseCase,
+        getEnrollmentsUseCase,
+        updateEnrollmentUseCase,
+        deleteEnrollmentUseCase,
     );
 
     // --- REGISTRO DE RUTAS ---
@@ -299,6 +338,24 @@ export function buildApp() {
     server.delete(
         '/api/v1/sports/:id',
         sportController.delete.bind(sportController),
+    );
+
+    // Rutas de Inscripciones
+    server.get(
+        '/api/v1/enrollments',
+        enrollmentController.getAll.bind(enrollmentController),
+    );
+    server.post(
+        '/api/v1/enrollments',
+        enrollmentController.create.bind(enrollmentController),
+    );
+    server.patch(
+        '/api/v1/enrollments/:id',
+        enrollmentController.update.bind(enrollmentController),
+    );
+    server.delete(
+        '/api/v1/enrollments/:id',
+        enrollmentController.delete.bind(enrollmentController),
     );
 
     // HEALTHCHECK
