@@ -6,7 +6,6 @@ import {
     EnrollmentValidationError,
     EnrollmentDuplicateError,
     EnrollmentCapacityError,
-    EnrollmentMemberInactiveError,
 } from '../../domain/enrollments/errors/EnrollmentErrors.js';
 import { EnrollmentDTO } from '@alentapp/shared';
 
