@@ -11,10 +11,12 @@ import {
     UpdateEnrollmentRequest,
 } from '@alentapp/shared';
 
+import { Enrollment } from '../../generated/client/index.js';
+
 export class PostgresEnrollmentRepository implements EnrollmentRepository {
     // Convierte el objeto de Prisma al DTO del shared
     // Prisma devuelve sus propios tipos internos — este método los traduce
-    private mapToDTO(enrollment: any): EnrollmentDTO {
+    private mapToDTO(enrollment: Enrollment): EnrollmentDTO {
         return {
             id: enrollment.id,
             member_id: enrollment.member_id,
