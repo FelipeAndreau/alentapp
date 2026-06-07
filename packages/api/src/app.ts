@@ -3,6 +3,8 @@ import './infrastructure/telemetry.js';
 
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
 
 // INFRAESTRUCTURA (REPOS)
 import { PostgresMemberRepository } from './infrastructure/members/PostgresMemberRepository.js';
@@ -87,12 +89,26 @@ export function buildApp() {
     });
 
     server.register(cors, {
-        origin: process.env.NODE_ENV === 'production'
-            ? ['http://localhost', 'http://localhost:80']
-            : true,
+        origin:
+            process.env.NODE_ENV === 'production'
+                ? ['http://localhost', 'http://localhost:80']
+                : true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
+    });
+
+    // Security headers — protege contra XSS, clickjacking, MIME sniffing, etc.
+    // helmet agrega ~12 headers HTTP de seguridad automáticamente
+    server.register(helmet, {
+        contentSecurityPolicy: false, // deshabilitado para no bloquear la UI en dev
+    });
+
+    // Rate limiting — limita a 100 requests por minuto por IP
+    // protege contra fuerza bruta y abuso de la API
+    server.register(rateLimit, {
+        max: 100,
+        timeWindow: '1 minute',
     });
 
     // --- GLOBAL ERROR HANDLER ---

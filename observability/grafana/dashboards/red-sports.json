@@ -1,0 +1,153 @@
+{
+    "id": null,
+    "uid": "red-sports",
+    "title": "RED — Alentapp Sports",
+    "tags": ["sports", "red", "observability"],
+    "timezone": "browser",
+    "schemaVersion": 36,
+    "version": 1,
+    "refresh": "5s",
+    "annotations": { "list": [] },
+    "templating": { "list": [] },
+    "panels": [
+        {
+            "id": 1,
+            "title": "Requests por segundo",
+            "type": "timeseries",
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
+            "targets": [
+                {
+                    "expr": "sum(rate(http_requests_total{route=~\"/api/v1/sports.*\"}[1m])) by (method, route)",
+                    "legendFormat": "{{method}} {{route}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps",
+                    "color": { "mode": "palette-classic" }
+                }
+            },
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+        },
+        {
+            "id": 2,
+            "title": "Tasa de error (%)",
+            "type": "timeseries",
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
+            "targets": [
+                {
+                    "expr": "sum(rate(http_requests_errors{route=~\"/api/v1/sports.*\"}[1m])) / sum(rate(http_requests_total{route=~\"/api/v1/sports.*\"}[1m])) * 100",
+                    "legendFormat": "Error %"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent",
+                    "color": { "mode": "fixed", "fixedColor": "red" },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            { "color": "green", "value": null },
+                            { "color": "yellow", "value": 1 },
+                            { "color": "red", "value": 5 }
+                        ]
+                    }
+                }
+            },
+            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+        },
+        {
+            "id": 3,
+            "title": "Latencia p95 / p99 (ms)",
+            "type": "timeseries",
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_bucket{route=~\"/api/v1/sports.*\"}[5m])) by (le))",
+                    "legendFormat": "p95"
+                },
+                {
+                    "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_bucket{route=~\"/api/v1/sports.*\"}[5m])) by (le))",
+                    "legendFormat": "p99"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "ms",
+                    "color": { "mode": "palette-classic" }
+                }
+            },
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+        },
+        {
+            "id": 4,
+            "title": "Requests por código de estado",
+            "type": "timeseries",
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
+            "targets": [
+                {
+                    "expr": "sum by (status) (rate(http_requests_total{route=~\"/api/v1/sports.*\"}[5m]))",
+                    "legendFormat": "{{status}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps",
+                    "color": { "mode": "palette-classic" },
+                    "custom": { "stacking": { "mode": "normal", "group": "A" } }
+                }
+            },
+            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+        },
+        {
+            "id": 5,
+            "title": "Memoria del proceso (MB)",
+            "type": "timeseries",
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
+            "targets": [
+                {
+                    "expr": "process_memory_usage / 1024 / 1024",
+                    "legendFormat": "Heap Used (MB)"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "MiB",
+                    "color": { "mode": "fixed", "fixedColor": "blue" }
+                }
+            },
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }
+        },
+        {
+            "id": 6,
+            "title": "Endpoints más lentos — sports (top 5)",
+            "type": "bargauge",
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
+            "targets": [
+                {
+                    "expr": "topk(5, avg by (route) (rate(http_request_duration_sum{route=~\"/api/v1/sports.*\"}[5m])) / avg by (route) (rate(http_request_duration_count{route=~\"/api/v1/sports.*\"}[5m])))",
+                    "legendFormat": "{{route}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "ms",
+                    "color": { "mode": "thresholds" },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            { "color": "green", "value": null },
+                            { "color": "yellow", "value": 200 },
+                            { "color": "red", "value": 1000 }
+                        ]
+                    }
+                }
+            },
+            "options": {
+                "orientation": "horizontal",
+                "reduceOptions": { "calcs": ["lastNotNull"] }
+            },
+            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 }
+        }
+    ]
+}
