@@ -9,6 +9,7 @@ import {
     ValidationError,
     ConflictError,
 } from '../../domain/payments/errors/PaymentErrors.js';
+import { SportAlreadyDeletedError } from '../../domain/sports/errors/SportErrors.js';
 import {
     requestCounter,
     errorCounter,
@@ -153,6 +154,15 @@ export class SportController {
                 errorCounter.add(1, { method, route, status: '404' });
                 return reply
                     .status(404)
+                    .send({
+                        error: (error as any).message,
+                        code: (error as any).code,
+                    });
+            }
+            if (error instanceof ConflictError || error instanceof SportAlreadyDeletedError) {
+                errorCounter.add(1, { method, route, status: '409' });
+                return reply
+                    .status(409)
                     .send({
                         error: (error as any).message,
                         code: (error as any).code,

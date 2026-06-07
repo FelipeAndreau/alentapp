@@ -8,6 +8,11 @@ import {
     UpdateEnrollmentRequest,
 } from '@alentapp/shared';
 import {
+    NotFoundError,
+    ValidationError,
+    ConflictError,
+} from '../../domain/payments/errors/PaymentErrors.js';
+import {
     requestCounter,
     errorCounter,
     requestDuration,
@@ -23,6 +28,23 @@ export class EnrollmentController {
         private readonly deleteEnrollmentUseCase: DeleteEnrollmentUseCase,
     ) {}
 
+    private handleError(error: any, reply: FastifyReply, method: string, route: string) {
+        if (error instanceof NotFoundError) {
+            errorCounter.add(1, { method, route, status: '404' });
+            return reply.status(404).send({ error: error.message, code: (error as any).code });
+        }
+        if (error instanceof ValidationError) {
+            errorCounter.add(1, { method, route, status: '400' });
+            return reply.status(400).send({ error: error.message, code: (error as any).code });
+        }
+        if (error instanceof ConflictError) {
+            errorCounter.add(1, { method, route, status: '409' });
+            return reply.status(409).send({ error: error.message, code: (error as any).code });
+        }
+        errorCounter.add(1, { method, route, status: '500' });
+        return reply.status(500).send({ error: 'Internal server error' });
+    }
+
     async getAll(request: FastifyRequest, reply: FastifyReply) {
         const start = Date.now();
         const method = request.method;
@@ -33,8 +55,7 @@ export class EnrollmentController {
             requestCounter.add(1, { method, route, status: '200' });
             return reply.status(200).send({ data: enrollments });
         } catch (error: any) {
-            errorCounter.add(1, { method, route, status: '500' });
-            throw error;
+            return this.handleError(error, reply, method, route);
         } finally {
             requestDuration.record(Date.now() - start, { method, route });
             decrementActiveRequests();
@@ -56,8 +77,7 @@ export class EnrollmentController {
             requestCounter.add(1, { method, route, status: '201' });
             return reply.status(201).send({ data: enrollment });
         } catch (error: any) {
-            errorCounter.add(1, { method, route, status: '400' });
-            throw error;
+            return this.handleError(error, reply, method, route);
         } finally {
             requestDuration.record(Date.now() - start, { method, route });
             decrementActiveRequests();
@@ -83,8 +103,7 @@ export class EnrollmentController {
             requestCounter.add(1, { method, route, status: '200' });
             return reply.status(200).send({ data: enrollment });
         } catch (error: any) {
-            errorCounter.add(1, { method, route, status: '400' });
-            throw error;
+            return this.handleError(error, reply, method, route);
         } finally {
             requestDuration.record(Date.now() - start, { method, route });
             decrementActiveRequests();
@@ -106,8 +125,7 @@ export class EnrollmentController {
             requestCounter.add(1, { method, route, status: '200' });
             return reply.status(200).send({ data: enrollment });
         } catch (error: any) {
-            errorCounter.add(1, { method, route, status: '400' });
-            throw error;
+            return this.handleError(error, reply, method, route);
         } finally {
             requestDuration.record(Date.now() - start, { method, route });
             decrementActiveRequests();
