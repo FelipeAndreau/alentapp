@@ -26,3 +26,31 @@ groups:
         annotations:
           summary: "Latencia p95 > 1s en /disciplines"
           description: "El percentil 95 de latencia supera los 1000ms en los últimos 5 minutos para el endpoint de disciplinas."
+
+  - name: alentapp-lockers
+    rules:
+      - alert: LockerHighErrorRate
+        expr: >
+          sum(rate(http_requests_errors{route=~"/api/v1/lockers.*"}[5m]))
+          /
+          sum(rate(http_requests_total{route=~"/api/v1/lockers.*"}[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          entity: lockers
+        annotations:
+          summary: "Tasa de error alta en /lockers (> 5%)"
+          description: "El error rate supera el 5% en los últimos 5 minutos para el endpoint de casilleros."
+
+      - alert: LockerHighLatency
+        expr: >
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_bucket{route=~"/api/v1/lockers.*"}[5m])) by (le)
+          ) > 1000
+        for: 2m
+        labels:
+          severity: warning
+          entity: lockers
+        annotations:
+          summary: "Latencia p95 > 1s en /lockers"
+          description: "El percentil 95 de latencia supera los 1000ms en los últimos 5 minutos para el endpoint de casilleros."
