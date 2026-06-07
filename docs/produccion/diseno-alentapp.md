@@ -246,6 +246,47 @@ done
 
 ---
 
+## 8. Instrumentación del Módulo de Lockers
+
+Extendiendo el patrón RED implementado originalmente en el `PaymentController`, el módulo de Casilleros (Lockers) quedó completamente instrumentado.
+
+### 8.1 Endpoints instrumentados
+
+Los cuatro handlers del `LockerController` registran las métricas RED con labels `method`, `route` y `status`:
+
+| Endpoint | Método | Handler | Status codes registrados |
+|----------|--------|---------|--------------------------|
+| `/api/v1/lockers` | GET | `getAll` | 200, 500 |
+| `/api/v1/lockers` | POST | `create` | 201, 400, 409, 500 |
+| `/api/v1/lockers/:id` | PUT | `update` | 200, 400, 404, 409, 500 |
+| `/api/v1/lockers/:id` | DELETE | `delete` | 200, 404, 409, 500 |
+
+Cada handler sigue el mismo flujo: inicia un timer y llama a `incrementActiveRequests()` al entrar, registra `requestCounter` y `errorCounter` según el resultado, y en el bloque `finally` registra `requestDuration` y llama a `decrementActiveRequests()`, garantizando que la duración y el conteo de requests activos se actualicen aunque el handler falle.
+
+### 8.2 Dashboard RED de Lockers
+
+El dashboard `observability/grafana/dashboards/red-lockers.json` replica el esquema de los demás módulos con 6 paneles, todos filtrando por `route=~"/api/v1/lockers.*"`:
+
+| Panel | Query | Tipo |
+|-------|-------|------|
+| 1. Requests/seg | `sum(rate(http_requests_total{route=~"/api/v1/lockers.*"}[1m])) by (method, route)` | Time series |
+| 2. Tasa de error (%) | `sum(rate(http_requests_errors{...}[1m])) / sum(rate(http_requests_total{...}[1m])) * 100` | Time series |
+| 3. Latencia p95/p99 | `histogram_quantile(0.95/0.99, sum(rate(http_request_duration_bucket{...}[5m])) by (le))` | Time series |
+| 4. Por código de estado | `sum by (status) (rate(http_requests_total{...}[5m]))` | Time series |
+| 5. Memoria del proceso | `process_memory_usage / 1024 / 1024` | Time series |
+| 6. Endpoints más lentos | `topk(5, avg by (route) (rate(http_request_duration_sum{...}[5m])) / avg by (route) (rate(http_request_duration_count{...}[5m])))` | Bar gauge |
+
+### 8.3 Alertas de Lockers
+
+En `observability/prometheus/rules.yml` se agregó el grupo `alentapp-lockers` con dos reglas, siguiendo el mismo formato que disciplines y sports:
+
+| Alerta | Condición | Duración |
+|--------|-----------|----------|
+| `LockerHighErrorRate` | error rate > 5% | 2m |
+| `LockerHighLatency` | latencia p95 > 1000ms | 2m |
+
+---
+
 ## Conclusión del Diseño
 
 La solución cumple con los requisitos de seguridad, eficiencia y observabilidad del enunciado. El diseño es minimalista pero extensible: agregar nuevos controllers instrumentados solo requiere importar `getMeter` y replicar el patrón RED, Prometheus y Grafana ya están provisionados para recibir los datos automáticamente.
