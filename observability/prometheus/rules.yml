@@ -1,28 +1,56 @@
 groups:
-  - name: alentapp-disciplines
-    rules:
-      - alert: DisciplineHighErrorRate
-        expr: >
-          sum(rate(http_requests_errors{route=~"/api/v1/disciplines.*"}[5m]))
-          /
-          sum(rate(http_requests_total{route=~"/api/v1/disciplines.*"}[5m])) > 0.05
-        for: 2m
-        labels:
-          severity: warning
-          entity: disciplines
-        annotations:
-          summary: "Tasa de error alta en /disciplines (> 5%)"
-          description: "El error rate supera el 5% en los últimos 5 minutos para el endpoint de disciplinas."
+    - name: alentapp-disciplines
+      rules:
+          - alert: DisciplineHighErrorRate
+            expr: >
+                sum(rate(http_requests_errors{route=~"/api/v1/disciplines.*"}[5m]))
+                /
+                sum(rate(http_requests_total{route=~"/api/v1/disciplines.*"}[5m])) > 0.05
+            for: 2m
+            labels:
+                severity: warning
+                entity: disciplines
+            annotations:
+                summary: 'Tasa de error alta en /disciplines (> 5%)'
+                description: 'El error rate supera el 5% en los últimos 5 minutos para el endpoint de disciplinas.'
 
-      - alert: DisciplineHighLatency
-        expr: >
-          histogram_quantile(0.95,
-            sum(rate(http_request_duration_bucket{route=~"/api/v1/disciplines.*"}[5m])) by (le)
-          ) > 1000
-        for: 2m
-        labels:
-          severity: warning
-          entity: disciplines
-        annotations:
-          summary: "Latencia p95 > 1s en /disciplines"
-          description: "El percentil 95 de latencia supera los 1000ms en los últimos 5 minutos para el endpoint de disciplinas."
+          - alert: DisciplineHighLatency
+            expr: >
+                histogram_quantile(0.95,
+                  sum(rate(http_request_duration_bucket{route=~"/api/v1/disciplines.*"}[5m])) by (le)
+                ) > 1000
+            for: 2m
+            labels:
+                severity: warning
+                entity: disciplines
+            annotations:
+                summary: 'Latencia p95 > 1s en /disciplines'
+                description: 'El percentil 95 de latencia supera los 1000ms en los últimos 5 minutos para el endpoint de disciplinas.'
+
+    - name: alentapp-sports
+      rules:
+          - alert: SportHighErrorRate
+            expr: >
+                sum(rate(http_requests_errors{route=~"/api/v1/sports.*"}[5m]))
+                /
+                sum(rate(http_requests_total{route=~"/api/v1/sports.*"}[5m])) > 0.05
+            for: 2m
+            labels:
+                severity: warning
+                entity: sports
+            annotations:
+                summary: 'Tasa de error alta en /sports (> 5%)'
+                description: 'El error rate supera el 5% en los últimos 5 minutos para el endpoint de deportes.'
+
+          - alert: SportHighLatency
+            expr: >
+                histogram_quantile(0.95,
+                  sum(rate(http_request_duration_bucket{route=~"/api/v1/sports.*"}[5m])) by (le)
+                ) > 1000
+            for: 2m
+            labels:
+                severity: warning
+                entity: sports
+            annotations:
+                summary: 'Latencia p95 > 1s en /sports'
+                description: 'El percentil 95 de latencia supera los 1000ms en los últimos 5 minutos para el endpoint de deportes.'
