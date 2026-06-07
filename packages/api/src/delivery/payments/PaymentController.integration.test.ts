@@ -137,9 +137,9 @@ describe('Payment API Integration Tests', () => {
     it('3. debe retornar 409 si ya existe un pago activo', async () => {
       const payload = {
         amount: '1000',
-        month: 5,
-        year: 2026,
-        due_date: '2026-05-10',
+        month: 12,
+        year: 2099,
+        due_date: '2099-12-10',
         member_id: 'm-conflict'
       };
 
