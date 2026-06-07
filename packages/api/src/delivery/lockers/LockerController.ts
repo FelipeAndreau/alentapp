@@ -20,10 +20,10 @@ export class LockerController {
         private readonly deleteLockerUseCase: DeleteLockerUseCase,
     ) { }
 
-    async getAll(_request: FastifyRequest, reply: FastifyReply) {
+    async getAll(request: FastifyRequest, reply: FastifyReply) {
         const start = Date.now();
-        const method = _request.method;
-        const route = _request.url.split('?')[0];
+        const method = request.method;
+        const route = request.url.split('?')[0];
         incrementActiveRequests();
 
         try {
@@ -32,7 +32,7 @@ export class LockerController {
             return reply.status(200).send({ data: lockers });
         } catch (error: any) {
             errorCounter.add(1, { method, route, status: '500' });
-            _request.log.error({ err: error }, 'Failed to get lockers');
+            request.log.error({ err: error }, 'Failed to get lockers');
             return reply.status(500).send({ error: error.message });
         } finally {
             requestDuration.record(Date.now() - start, { method, route });
