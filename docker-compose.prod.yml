@@ -7,6 +7,8 @@ services:
       - .env
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-alentapp_db}
+    ports:
+      - "5434:5432"
     volumes:
       - pgdata-prod:/var/lib/postgresql/data
     networks:
@@ -90,6 +92,10 @@ services:
       - ALL
     cap_add:
       - NET_BIND_SERVICE
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
     read_only: true
     tmpfs:
       - /tmp
@@ -168,6 +174,8 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL:-http://localhost:3001}
+      - GF_USERS_ALLOW_UI_UPDATES=false
+      - GF_DASHBOARDS_MIN_REFRESH_INTERVAL=1s
     healthcheck:
       test: ['CMD-SHELL', 'curl -sf http://localhost:3000/api/health || exit 1']
       interval: 30s
