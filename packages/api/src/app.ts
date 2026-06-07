@@ -28,6 +28,7 @@ import {
     ValidationError,
     ConflictError,
 } from './domain/payments/errors/PaymentErrors.js';
+import { SportAlreadyDeletedError } from './domain/sports/errors/SportErrors.js';
 
 import { shutdownTelemetry } from './infrastructure/telemetry.js';
 
@@ -101,7 +102,7 @@ export function buildApp() {
     // Security headers — protege contra XSS, clickjacking, MIME sniffing, etc.
     // helmet agrega ~12 headers HTTP de seguridad automáticamente
     server.register(helmet, {
-        contentSecurityPolicy: false, // deshabilitado para no bloquear la UI en dev
+        contentSecurityPolicy: process.env.NODE_ENV === 'production', // Habilitado en prod, deshabilitado en dev
     });
 
     // Rate limiting — limita a 100 requests por minuto por IP
@@ -123,7 +124,7 @@ export function buildApp() {
                 .status(400)
                 .send({ error: error.message, code: (error as any).code });
         }
-        if (error instanceof ConflictError) {
+        if (error instanceof ConflictError || error instanceof SportAlreadyDeletedError) {
             return reply
                 .status(409)
                 .send({ error: error.message, code: (error as any).code });

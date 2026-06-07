@@ -1,5 +1,6 @@
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { metrics } from '@opentelemetry/api';
 import { MeterProvider } from '@opentelemetry/sdk-metrics';
 
@@ -20,6 +21,10 @@ metrics.setGlobalMeterProvider(meterProvider);
 const instrumentations = getNodeAutoInstrumentations({
   '@opentelemetry/instrumentation-http': {},
   '@opentelemetry/instrumentation-fastify': {},
+});
+
+registerInstrumentations({
+  instrumentations,
 });
 
 // Set meter provider for auto-instrumentations

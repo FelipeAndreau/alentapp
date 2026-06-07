@@ -7,5 +7,5 @@ if (!process.env.DATABASE_URL) {
 
 export const prisma = new PrismaClient({
     adapter: new PrismaPg(process.env.DATABASE_URL),
-    log: ['query', 'info', 'warn', 'error'],
+    log: process.env.NODE_ENV === 'production' ? ['warn', 'error'] : ['query', 'info', 'warn', 'error'],
 });
