@@ -24,7 +24,9 @@ describe('MemberController', () => {
     const mockRequest = {
         log: { info: vi.fn() },
         body: { name: 'Juan' },
-        params: { id: '123' }
+        params: { id: '123' },
+        method: 'GET',
+        url: '/api/v1/socios'
     };
 
     beforeEach(() => {
